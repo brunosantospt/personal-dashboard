@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+import httpx
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import get_db, init_db
 from .routers import admin, auth, ws
-from .services import data
+from .services import data, spotify, tokens
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
@@ -46,6 +47,25 @@ def health():
 def dashboard_data(db: Session = Depends(get_db)):
     # Agrega calendário + tasks + spotify + meteo. Push em tempo real (WS) vem na Fase 4.
     return data.dashboard(db)
+
+
+@app.post("/api/spotify/{action}", tags=["spotify"])
+def spotify_control(action: str, db: Session = Depends(get_db)):
+    if action not in spotify.CONTROLS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "ação inválida")
+    token = tokens.get_valid_access_token(db, "spotify")
+    if not token:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Spotify não autenticado")
+    try:
+        spotify.control(action, token)
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+        if code == 403:
+            raise HTTPException(403, "Controlo requer Spotify Premium")
+        if code == 404:
+            raise HTTPException(404, "Sem dispositivo Spotify ativo")
+        raise HTTPException(502, f"Erro Spotify ({code})")
+    return {"action": action, "status": "ok"}
 
 
 # A Dashboard View (frontend estático) é servida na raiz. Registar POR ÚLTIMO para

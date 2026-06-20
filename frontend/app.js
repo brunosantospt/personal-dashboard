@@ -92,8 +92,34 @@ function setSpotify(s) {
   $("cover").src = s.image || "";
   $("track-title").textContent = s.name;
   $("track-artist").textContent = s.artists || "";
+  $("btn-playpause").textContent = s.is_playing ? "⏸" : "▶";
   updateProgress();
 }
+
+// --- Controlos de playback ---
+async function control(action) {
+  try {
+    const r = await fetch(`/api/spotify/${action}`, { method: "POST" });
+    if (!r.ok) {
+      const err = $("btn-playpause");
+      err.classList.add("flash-err");
+      setTimeout(() => err.classList.remove("flash-err"), 1200);
+      const body = await r.json().catch(() => ({}));
+      console.warn("controlo Spotify falhou:", body.detail || r.status);
+      return;
+    }
+    // Otimista: o estado real chega no próximo refresh. Pequeno atraso ajuda a API.
+    setTimeout(refresh, 400);
+  } catch (e) {
+    console.error("controlo falhou", e);
+  }
+}
+
+$("btn-prev").addEventListener("click", () => control("previous"));
+$("btn-next").addEventListener("click", () => control("next"));
+$("btn-playpause").addEventListener("click", () =>
+  control(spotify && spotify.is_playing ? "pause" : "play")
+);
 
 function updateProgress() {
   if (!spotify || !spotify.duration_ms) return;

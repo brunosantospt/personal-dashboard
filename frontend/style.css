@@ -5,6 +5,7 @@
   --text: #e6edf3;
   --muted: #7d8590;
   --accent: #5eead4;
+  --spotify: #1db954;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -97,7 +98,19 @@ body {
 .player .title { font-size: 1.3rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player .artist { color: var(--muted); margin-bottom: 10px; }
 .progress { height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 99px; overflow: hidden; }
-.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
-.now-playing { color: var(--accent); font-size: 0.85rem; white-space: nowrap; flex: none; }
+.progress-bar { height: 100%; width: 0; background: var(--spotify); transition: width 1s linear; }
+.controls { display: flex; align-items: center; gap: 8px; flex: none; }
+.ctrl {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, 0.06);
+  color: var(--spotify); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+.ctrl:hover { background: rgba(29, 185, 84, 0.18); }
+.ctrl:active { transform: scale(0.92); }
+.ctrl.play { width: 56px; height: 56px; background: var(--spotify); color: #04231f; border: none; font-size: 1.3rem; }
+.ctrl.play:hover { background: #1ed760; }
+.ctrl.flash-err { background: #4a1f1f; border-color: #7a2e2e; }
 
 [hidden] { display: none !important; }

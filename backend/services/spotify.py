@@ -9,7 +9,11 @@ from ..config import settings
 
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
-SCOPES = ["user-read-currently-playing", "user-read-playback-state"]
+SCOPES = [
+    "user-read-currently-playing",
+    "user-read-playback-state",
+    "user-modify-playback-state",  # controlo: play/pause/next/previous (requer Premium)
+]
 
 
 def make_pkce() -> tuple[str, str]:
@@ -61,3 +65,24 @@ def refresh(refresh_token: str) -> dict:
     )
     resp.raise_for_status()
     return resp.json()
+
+
+PLAYER_URL = "https://api.spotify.com/v1/me/player"
+CONTROLS = {
+    "play": ("PUT", "/play"),
+    "pause": ("PUT", "/pause"),
+    "next": ("POST", "/next"),
+    "previous": ("POST", "/previous"),
+}
+
+
+def control(action: str, access_token: str) -> None:
+    """Controlo de playback. 204 = ok; 403 = sem Premium; 404 = sem device ativo."""
+    method, path = CONTROLS[action]
+    r = httpx.request(
+        method,
+        PLAYER_URL + path,
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=10,
+    )
+    r.raise_for_status()
