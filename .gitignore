@@ -1,0 +1,29 @@
+# Segredos — nunca commitar
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Base de dados SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / Vite (admin)
+node_modules/
+dist/
+.vite/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
