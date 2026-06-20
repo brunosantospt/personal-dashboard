@@ -1,0 +1,103 @@
+:root {
+  --bg: #0b0f14;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --accent: #5eead4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  background: radial-gradient(1200px 800px at 70% -10%, #15202b 0%, var(--bg) 55%);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.dashboard {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 4vh 4vw;
+  gap: 3vh;
+}
+
+.top { text-align: center; }
+
+.clock {
+  font-size: clamp(4rem, 13vw, 11rem);
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.date {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: var(--muted);
+  margin-top: 1vh;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2.5vh 2vw;
+  flex: 1;
+  align-content: start;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  backdrop-filter: blur(6px);
+}
+
+.card h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.muted { color: var(--muted); }
+
+/* meteo */
+.weather-body { display: flex; align-items: center; gap: 20px; }
+.temp { font-size: 3.5rem; font-weight: 300; font-variant-numeric: tabular-nums; }
+.wx { font-size: 1.1rem; line-height: 1.5; }
+.wx-icon { font-size: 2.2rem; }
+
+/* listas */
+.list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.list li { display: flex; gap: 12px; align-items: flex-start; font-size: 1.1rem; }
+.li-title { font-weight: 500; }
+.dot, .check { flex: none; }
+.dot { margin-top: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.check {
+  margin-top: 4px; width: 14px; height: 14px; border-radius: 4px;
+  border: 2px solid var(--muted); background: transparent;
+}
+
+/* spotify player */
+.player {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 16px 22px;
+}
+.player .cover { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; background: #222; flex: none; }
+.player .track { flex: 1; min-width: 0; }
+.player .title { font-size: 1.3rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player .artist { color: var(--muted); margin-bottom: 10px; }
+.progress { height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 99px; overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
+.now-playing { color: var(--accent); font-size: 0.85rem; white-space: nowrap; flex: none; }
+
+[hidden] { display: none !important; }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Personal Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="dashboard">
+    <header class="top">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date" id="date">—</div>
+    </header>
+
+    <div class="grid">
+      <section class="card weather">
+        <h2>Meteorologia</h2>
+        <div class="weather-body" id="weather"><span class="muted">a carregar…</span></div>
+      </section>
+
+      <section class="card">
+        <h2>Próximos eventos</h2>
+        <ul id="calendar" class="list"><li class="muted">a carregar…</li></ul>
+      </section>
+
+      <section class="card">
+        <h2>Tarefas</h2>
+        <ul id="tasks" class="list"><li class="muted">a carregar…</li></ul>
+      </section>
+    </div>
+
+    <footer class="player" id="player" hidden>
+      <img class="cover" id="cover" alt="">
+      <div class="track">
+        <div class="title" id="track-title"></div>
+        <div class="artist" id="track-artist"></div>
+        <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+      </div>
+      <div class="now-playing">♫ a tocar</div>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

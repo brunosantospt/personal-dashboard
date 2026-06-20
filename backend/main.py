@@ -1,11 +1,17 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 
 from .config import settings
-from .database import init_db
+from .database import get_db, init_db
 from .routers import admin, auth, ws
+from .services import data
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
 @asynccontextmanager
@@ -37,6 +43,11 @@ def health():
 
 
 @app.get("/api/dashboard", tags=["dashboard"])
-def dashboard_data():
-    # Agrega calendário + tasks + spotify + meteo. Ligado na Fase 4.
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "dados do dashboard — Fase 4")
+def dashboard_data(db: Session = Depends(get_db)):
+    # Agrega calendário + tasks + spotify + meteo. Push em tempo real (WS) vem na Fase 4.
+    return data.dashboard(db)
+
+
+# A Dashboard View (frontend estático) é servida na raiz. Registar POR ÚLTIMO para
+# não sombrear as rotas /api e /ws.
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
