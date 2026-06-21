@@ -14,6 +14,7 @@ from .services import config_store, data, spotify, tokens
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
+ADMIN_DIST = ROOT_DIR / "admin" / "dist"
 PHOTOS_DIR = ROOT_DIR / "photos"
 PHOTOS_DIR.mkdir(exist_ok=True)
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -90,6 +91,10 @@ def spotify_control(action: str, db: Session = Depends(get_db)):
 
 # Pasta de fotos (carousel) servida estaticamente. Antes do mount da raiz.
 app.mount("/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
+
+# Admin Panel (build Vite). Só montado se já existir build (admin/dist).
+if ADMIN_DIST.is_dir():
+    app.mount("/admin", StaticFiles(directory=ADMIN_DIST, html=True), name="admin")
 
 # A Dashboard View (frontend estático) é servida na raiz. Registar POR ÚLTIMO para
 # não sombrear as rotas /api e /ws.
