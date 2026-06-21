@@ -12,7 +12,11 @@ from .database import get_db, init_db
 from .routers import admin, auth, ws
 from .services import data, spotify, tokens
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = ROOT_DIR / "frontend"
+PHOTOS_DIR = ROOT_DIR / "photos"
+PHOTOS_DIR.mkdir(exist_ok=True)
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 
 @asynccontextmanager
@@ -49,6 +53,16 @@ def dashboard_data(db: Session = Depends(get_db)):
     return data.dashboard(db)
 
 
+@app.get("/api/photos", tags=["photos"])
+def list_photos():
+    photos = sorted(
+        f"/photos/{p.name}"
+        for p in PHOTOS_DIR.iterdir()
+        if p.is_file() and p.suffix.lower() in IMAGE_EXTS
+    )
+    return {"photos": photos}
+
+
 @app.post("/api/spotify/{action}", tags=["spotify"])
 def spotify_control(action: str, db: Session = Depends(get_db)):
     if action not in spotify.CONTROLS:
@@ -67,6 +81,9 @@ def spotify_control(action: str, db: Session = Depends(get_db)):
         raise HTTPException(502, f"Erro Spotify ({code})")
     return {"action": action, "status": "ok"}
 
+
+# Pasta de fotos (carousel) servida estaticamente. Antes do mount da raiz.
+app.mount("/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
 
 # A Dashboard View (frontend estático) é servida na raiz. Registar POR ÚLTIMO para
 # não sombrear as rotas /api e /ws.

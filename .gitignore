@@ -22,6 +22,10 @@ node_modules/
 dist/
 .vite/
 
+# Fotos do carousel — pessoais, nunca no git (exceto o placeholder da pasta)
+photos/*
+!photos/.gitkeep
+
 # OS / editor
 .DS_Store
 *.log

@@ -32,41 +32,96 @@ def weather() -> dict:
     }
 
 
+def _sort_key(start: str | None) -> float:
+    if not start:
+        return float("inf")
+    try:
+        d = dt.datetime.fromisoformat(start.replace("Z", "+00:00"))
+    except ValueError:
+        return float("inf")
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=dt.timezone.utc)
+    return d.timestamp()
+
+
+def _google_accounts(db: Session) -> list[str]:
+    return [a.account for a in tokens.accounts(db, "google")]
+
+
+def _label(account: str) -> str:
+    # Rótulo configurado (.env) ou, na falta, a parte antes do @.
+    return settings.account_labels.get(account) or (account.split("@")[0] if account else "")
+
+
+def _hidden(summary: str | None) -> bool:
+    s = (summary or "").lower()
+    return any(pat.lower() in s for pat in settings.calendar_hide)
+
+
 def calendar(db: Session) -> list[dict]:
-    token = tokens.get_valid_access_token(db, "google")
-    if not token:
-        return []
-    now = dt.datetime.now(dt.timezone.utc).isoformat()
-    r = httpx.get(
-        CALENDAR_URL,
-        params={"maxResults": 5, "timeMin": now, "singleEvents": "true", "orderBy": "startTime"},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=10,
-    )
-    r.raise_for_status()
-    out = []
-    for e in r.json().get("items", []):
-        start = e.get("start", {})
-        out.append({"summary": e.get("summary"), "start": start.get("dateTime") or start.get("date")})
-    return out
+    """Eventos das próximas, juntos de todas as contas Google e ordenados por hora."""
+    now = dt.datetime.now(dt.timezone.utc)
+    horizon = now + dt.timedelta(days=settings.calendar_horizon_days)
+    out: list[dict] = []
+    for account in _google_accounts(db):
+        token = tokens.get_valid_access_token(db, "google", account)
+        if not token:
+            continue
+        try:
+            r = httpx.get(
+                CALENDAR_URL,
+                params={
+                    "maxResults": 5,
+                    "timeMin": now.isoformat(),
+                    "timeMax": horizon.isoformat(),
+                    "singleEvents": "true",
+                    "orderBy": "startTime",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            r.raise_for_status()
+        except Exception:
+            continue  # uma conta a falhar não derruba a outra
+        for e in r.json().get("items", []):
+            if _hidden(e.get("summary")):
+                continue
+            start = e.get("start", {})
+            out.append({
+                "summary": e.get("summary"),
+                "start": start.get("dateTime") or start.get("date"),
+                "account": account,
+                "label": _label(account),
+            })
+    out.sort(key=lambda e: _sort_key(e["start"]))
+    return out[:6]
 
 
 def tasks_pending(db: Session) -> list[dict]:
-    token = tokens.get_valid_access_token(db, "google")
-    if not token:
-        return []
-    r = httpx.get(
-        TASKS_URL,
-        params={"maxResults": 20, "showCompleted": "false"},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=10,
-    )
-    r.raise_for_status()
-    out = []
-    for t in r.json().get("items", []):
-        if t.get("status") == "completed":
+    """Tarefas pendentes, juntas de todas as contas Google."""
+    out: list[dict] = []
+    for account in _google_accounts(db):
+        token = tokens.get_valid_access_token(db, "google", account)
+        if not token:
             continue
-        out.append({"title": t.get("title"), "due": t.get("due")})
+        try:
+            r = httpx.get(
+                TASKS_URL,
+                params={"maxResults": 20, "showCompleted": "false"},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            r.raise_for_status()
+        except Exception:
+            continue
+        for t in r.json().get("items", []):
+            if t.get("status") == "completed":
+                continue
+            out.append({
+                "title": t.get("title"), "due": t.get("due"),
+                "account": account, "label": _label(account),
+            })
+    out.sort(key=lambda t: _sort_key(t.get("due")))
     return out
 
 

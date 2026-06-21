@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     location_lat: float = 41.1579
     location_lon: float = -8.6291
 
+    # Rótulos das contas Google no dashboard (email -> nome). JSON no .env.
+    account_labels: dict[str, str] = {}
+
+    # Padrões de título a esconder nos próximos eventos (substring, case-insensitive).
+    calendar_hide: list[str] = []
+
+    # Só mostrar eventos dentro destes N dias (evita aniversários recorrentes a anos de distância).
+    calendar_horizon_days: int = 30
+
     # Google OAuth
     google_client_id: str = ""
     google_client_secret: str = ""
