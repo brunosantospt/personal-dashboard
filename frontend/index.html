@@ -24,9 +24,24 @@
         <ul id="calendar" class="list"><li class="muted">a carregar…</li></ul>
       </section>
 
-      <section class="card">
-        <h2>Tarefas</h2>
-        <ul id="tasks" class="list"><li class="muted">a carregar…</li></ul>
+      <section class="card flip" id="tasks-flip" data-mode="single">
+        <div class="flip-inner" id="tasks-inner">
+          <div class="flip-face" id="tasks-front">
+            <h2>Tarefas · <span class="face-label" id="front-label"></span></h2>
+            <button class="flip-btn" title="Virar">⤿</button>
+            <ul id="front-list" class="list"><li class="muted">a carregar…</li></ul>
+          </div>
+          <div class="flip-face back" id="tasks-back">
+            <h2>Tarefas · <span class="face-label" id="back-label"></span></h2>
+            <button class="flip-btn" title="Virar">⤿</button>
+            <ul id="back-list" class="list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card photos-card" id="photos-card" hidden>
+        <img class="carousel-img" id="carousel-a" alt="">
+        <img class="carousel-img" id="carousel-b" alt="">
       </section>
     </div>
 
