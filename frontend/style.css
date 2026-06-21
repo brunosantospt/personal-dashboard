@@ -8,6 +8,19 @@
   --spotify: #1db954;
 }
 
+/* tema claro (aplicado via data-theme no <html>, controlado pelo admin) */
+:root[data-theme="light"] {
+  --bg: #f4f5f7;
+  --bg-card: rgba(0, 0, 0, 0.04);
+  --border: rgba(0, 0, 0, 0.1);
+  --text: #1a1d21;
+  --muted: #6b7280;
+}
+:root[data-theme="light"] body { background: var(--bg); }
+
+/* widget desativado no admin */
+.card[data-disabled="1"] { display: none !important; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 

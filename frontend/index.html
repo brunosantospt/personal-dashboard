@@ -14,17 +14,17 @@
     </header>
 
     <div class="grid">
-      <section class="card weather">
+      <section class="card weather" data-widget="weather">
         <h2>Meteorologia</h2>
         <div class="weather-body" id="weather"><span class="muted">a carregar…</span></div>
       </section>
 
-      <section class="card">
+      <section class="card" data-widget="calendar">
         <h2>Próximos eventos</h2>
         <ul id="calendar" class="list"><li class="muted">a carregar…</li></ul>
       </section>
 
-      <section class="card flip" id="tasks-flip" data-mode="single">
+      <section class="card flip" id="tasks-flip" data-mode="single" data-widget="tasks">
         <div class="flip-inner" id="tasks-inner">
           <div class="flip-face" id="tasks-front">
             <h2>Tarefas · <span class="face-label" id="front-label"></span></h2>
@@ -39,7 +39,7 @@
         </div>
       </section>
 
-      <section class="card photos-card" id="photos-card" hidden>
+      <section class="card photos-card" id="photos-card" data-widget="photos" hidden>
         <img class="carousel-img" id="carousel-a" alt="">
         <img class="carousel-img" id="carousel-b" alt="">
       </section>

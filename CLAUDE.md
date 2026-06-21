@@ -46,7 +46,15 @@ Backend planeado em `backend/`: `main.py`, `routers/` (auth, widgets, admin, ws)
 - Open-Meteo (sem auth) — 30 min; localização default Porto (`LAT 41.1579`, `LON -8.6291`).
 
 ### Comandos
-Ainda não há scaffold, logo não há comandos reais. Previsto: backend com `uvicorn main:app --reload`; admin com `npm run dev` / `npm run build` (Vite). **Atualizar esta secção assim que o projeto for criado.**
+**Backend** (raiz do repo, com o venv ativo — `source .venv/bin/activate`):
+```
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+```
+Serve `/api`, `/ws`, a Dashboard View em `/`, o carousel em `/photos` e o Admin em `/admin` (se `admin/dist` existir). SQLite criada no arranque.
+
+**Admin Panel** (`admin/`): `npm install`, depois `npm run dev` (Vite na 5173, com proxy `/api`→8000) ou `npm run build` (gera `admin/dist`, servido pelo FastAPI em `/admin`).
+
+**Config local:** copiar `.env.example` → `.env`. Para o admin, gerar hash bcrypt da password em `ADMIN_PASSWORD_HASH`. Config de apresentação (tema/layout/widgets) vive na tabela `settings` e é editada pelo Admin; os valores do `.env` (`ACCOUNT_LABELS`, `CALENDAR_HIDE`, `CALENDAR_HORIZON_DAYS`, localização) são os defaults iniciais.
 
 ---
 

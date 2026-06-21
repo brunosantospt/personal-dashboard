@@ -146,10 +146,11 @@ window.addEventListener("resize", setFlipHeight);
 // --- Spotify (com avanço client-side da barra entre polls) ---
 let spotify = null;
 let spotifyAt = 0;
+let spotifyEnabled = true;
 
 function setSpotify(s) {
   const player = $("player");
-  if (!s || !s.name) { player.hidden = true; spotify = null; return; }
+  if (!spotifyEnabled || !s || !s.name) { player.hidden = true; spotify = null; return; }
   spotify = s;
   spotifyAt = Date.now();
   player.hidden = false;
@@ -225,8 +226,15 @@ function nextPhoto() {
   activeLayer = activeLayer === "a" ? "b" : "a";
 }
 
+let photoTimer = null;
+let photoIntervalMs = 8000;
+function schedulePhotos() {
+  if (photoTimer) clearInterval(photoTimer);
+  photoTimer = setInterval(nextPhoto, photoIntervalMs);
+}
+
 loadPhotoList();
-setInterval(nextPhoto, 8000);
+schedulePhotos();
 setInterval(loadPhotoList, 5 * 60 * 1000);  // apanha fotos novas na pasta
 
 // --- Loop de dados ---
@@ -245,3 +253,45 @@ async function refresh() {
 }
 refresh();
 setInterval(refresh, 5000);
+
+// --- Config do servidor (definida no Admin Panel) ---
+function applyConfig(cfg) {
+  const root = document.documentElement;
+  const a = cfg.appearance || {};
+  root.dataset.theme = a.theme || "dark";
+  root.style.setProperty("--accent", a.accent || "#5eead4");
+  root.style.fontSize = `${(a.font_scale || 1) * 100}%`;
+
+  const layout = cfg.layout || {};
+  const grid = document.querySelector(".grid");
+  if (layout.columns) grid.style.gridTemplateColumns = `repeat(${layout.columns}, 1fr)`;
+  (layout.order || []).forEach((name, i) => {
+    const el = grid.querySelector(`[data-widget="${name}"]`);
+    if (el) el.style.order = i;
+  });
+
+  const widgets = cfg.widgets || {};
+  Object.entries(widgets).forEach(([name, w]) => {
+    const el = document.querySelector(`[data-widget="${name}"]`);
+    if (el) el.dataset.disabled = w.enabled ? "" : "1";
+  });
+
+  spotifyEnabled = widgets.spotify ? widgets.spotify.enabled : true;
+  if (!spotifyEnabled) $("player").hidden = true;
+
+  const interval = (widgets.photos?.interval_seconds || 8) * 1000;
+  if (interval !== photoIntervalMs) {
+    photoIntervalMs = interval;
+    schedulePhotos();
+  }
+}
+
+async function loadConfig() {
+  try {
+    applyConfig(await (await fetch("/api/config")).json());
+  } catch (e) {
+    console.error("config falhou", e);
+  }
+}
+loadConfig();
+setInterval(loadConfig, 20000);  // aplica mudanças do admin em ~20s
