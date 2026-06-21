@@ -4,7 +4,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from ..config import settings
-from . import tokens
+from . import config_store, tokens
 
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 CALENDAR_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
@@ -12,12 +12,12 @@ TASKS_URL = "https://www.googleapis.com/tasks/v1/lists/@default/tasks"
 SPOTIFY_NOW_URL = "https://api.spotify.com/v1/me/player/currently-playing"
 
 
-def weather() -> dict:
+def weather(cfg: dict) -> dict:
     r = httpx.get(
         WEATHER_URL,
         params={
-            "latitude": settings.location_lat,
-            "longitude": settings.location_lon,
+            "latitude": cfg.get("lat", settings.location_lat),
+            "longitude": cfg.get("lon", settings.location_lon),
             "current": "temperature_2m,weather_code,wind_speed_10m",
             "timezone": "auto",
         },
@@ -53,15 +53,16 @@ def _label(account: str) -> str:
     return settings.account_labels.get(account) or (account.split("@")[0] if account else "")
 
 
-def _hidden(summary: str | None) -> bool:
+def _hidden(summary: str | None, patterns: list[str]) -> bool:
     s = (summary or "").lower()
-    return any(pat.lower() in s for pat in settings.calendar_hide)
+    return any(pat.lower() in s for pat in patterns)
 
 
-def calendar(db: Session) -> list[dict]:
+def calendar(db: Session, cfg: dict) -> list[dict]:
     """Eventos das próximas, juntos de todas as contas Google e ordenados por hora."""
     now = dt.datetime.now(dt.timezone.utc)
-    horizon = now + dt.timedelta(days=settings.calendar_horizon_days)
+    horizon = now + dt.timedelta(days=cfg.get("horizon_days", settings.calendar_horizon_days))
+    hide = cfg.get("hide", settings.calendar_hide)
     out: list[dict] = []
     for account in _google_accounts(db):
         token = tokens.get_valid_access_token(db, "google", account)
@@ -84,7 +85,7 @@ def calendar(db: Session) -> list[dict]:
         except Exception:
             continue  # uma conta a falhar não derruba a outra
         for e in r.json().get("items", []):
-            if _hidden(e.get("summary")):
+            if _hidden(e.get("summary"), hide):
                 continue
             start = e.get("start", {})
             out.append({
@@ -149,16 +150,23 @@ def spotify_now(db: Session) -> dict | None:
 
 
 def dashboard(db: Session) -> dict:
-    """Agrega todas as fontes. Resiliência por widget: se uma falha, as outras seguem."""
+    """Agrega todas as fontes. Resiliência por widget: se uma falha, as outras seguem.
+
+    Widgets desativados na config não são chamados (poupa chamadas às APIs).
+    """
+    w = config_store.get_config(db)["widgets"]
     sources = {
-        "weather": (weather, None),
-        "calendar": (lambda: calendar(db), []),
+        "weather": (lambda: weather(w["weather"]), None),
+        "calendar": (lambda: calendar(db, w["calendar"]), []),
         "tasks": (lambda: tasks_pending(db), []),
         "spotify": (lambda: spotify_now(db), None),
     }
     out: dict = {}
     errors: dict = {}
     for key, (fn, default) in sources.items():
+        if not w.get(key, {}).get("enabled", True):
+            out[key] = default  # widget desativado
+            continue
         try:
             out[key] = fn()
         except Exception as e:  # falha de uma API não derruba o resto

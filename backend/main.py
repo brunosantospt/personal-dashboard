@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import get_db, init_db
 from .routers import admin, auth, ws
-from .services import data, spotify, tokens
+from .services import config_store, data, spotify, tokens
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
@@ -45,6 +45,12 @@ app.include_router(ws.router)
 @app.get("/api/health", tags=["system"])
 def health():
     return {"status": "ok", "service": "personal-dashboard", "version": app.version}
+
+
+@app.get("/api/config", tags=["dashboard"])
+def public_config(db: Session = Depends(get_db)):
+    # Config de apresentação que a Dashboard View consome (sem auth).
+    return config_store.get_config(db)
 
 
 @app.get("/api/dashboard", tags=["dashboard"])

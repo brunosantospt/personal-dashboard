@@ -1,45 +1,53 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..services import admin_auth, config_store, tokens
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+protected = [Depends(admin_auth.require_admin)]
 
 
-def _todo(feature: str):
-    raise HTTPException(
-        status.HTTP_501_NOT_IMPLEMENTED, f"admin/{feature} — implementado na Fase 5"
-    )
-
-
-@router.get("/status")
-def integrations_status():
-    """Estado de todas as integrações (autenticadas / com erro)."""
-    _todo("status")
-
-
-@router.get("/widgets")
-def list_widgets():
-    _todo("widgets")
-
-
-@router.put("/widgets/{widget_id}")
-def update_widget(widget_id: int):
-    _todo("widgets")
-
-
-@router.put("/layout")
-def update_layout():
-    _todo("layout")
-
-
-@router.put("/appearance")
-def update_appearance():
-    _todo("appearance")
+class LoginBody(BaseModel):
+    password: str
 
 
 @router.post("/login")
-def login():
-    _todo("login")
+def login(body: LoginBody, request: Request):
+    admin_auth.rate_limit(request)
+    if not admin_auth.verify_password(body.password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Password incorreta")
+    return {"token": admin_auth.create_token()}
 
 
 @router.post("/logout")
 def logout():
-    _todo("logout")
+    # JWT é stateless: o cliente descarta o token. Endpoint existe por simetria.
+    return {"status": "ok"}
+
+
+@router.get("/status", dependencies=protected)
+def integrations_status(db: Session = Depends(get_db)):
+    """Estado de todas as integrações (autenticadas / com erro)."""
+    return tokens.status(db)
+
+
+@router.get("/config", dependencies=protected)
+def get_config(db: Session = Depends(get_db)):
+    return config_store.get_config(db)
+
+
+@router.put("/appearance", dependencies=protected)
+def put_appearance(body: dict = Body(...), db: Session = Depends(get_db)):
+    return config_store.update_section(db, "appearance", body)
+
+
+@router.put("/layout", dependencies=protected)
+def put_layout(body: dict = Body(...), db: Session = Depends(get_db)):
+    return config_store.update_section(db, "layout", body)
+
+
+@router.put("/widgets", dependencies=protected)
+def put_widgets(body: dict = Body(...), db: Session = Depends(get_db)):
+    return config_store.update_section(db, "widgets", body)

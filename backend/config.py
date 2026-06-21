@@ -10,8 +10,9 @@ class Settings(BaseSettings):
 
     # App
     database_url: str = "sqlite:///./backend/dashboard.db"
-    secret_key: str = "dev-insecure-change-me"  # chave Fernet (encripta tokens OAuth)
+    secret_key: str = "dev-insecure-change-me"  # chave Fernet (encripta tokens OAuth) + assina JWT
     admin_password_hash: str = ""               # hash bcrypt da password do admin
+    admin_session_hours: int = 24               # validade do JWT de sessão do admin
 
     # Localização default para a meteorologia (Porto)
     location_lat: float = 41.1579
