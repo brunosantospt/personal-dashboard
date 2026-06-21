@@ -20,11 +20,15 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
-def save_token(db: Session, provider: str, token: dict) -> OAuthToken:
-    """Guarda/atualiza tokens (encriptados) a partir de uma resposta OAuth."""
-    row = db.scalar(select(OAuthToken).where(OAuthToken.provider == provider))
+def save_token(db: Session, provider: str, token: dict, account: str = "") -> OAuthToken:
+    """Guarda/atualiza tokens (encriptados). Chave: (provider, account)."""
+    row = db.scalar(
+        select(OAuthToken).where(
+            OAuthToken.provider == provider, OAuthToken.account == account
+        )
+    )
     if row is None:
-        row = OAuthToken(provider=provider)
+        row = OAuthToken(provider=provider, account=account)
         db.add(row)
     row.access_token = encrypt(token["access_token"])
     # Em refresh, alguns providers não devolvem novo refresh_token: mantém o atual.
@@ -36,24 +40,49 @@ def save_token(db: Session, provider: str, token: dict) -> OAuthToken:
     return row
 
 
-def get_valid_access_token(db: Session, provider: str) -> str | None:
-    """Access token desencriptado, renovado automaticamente se estiver a expirar."""
-    row = db.scalar(select(OAuthToken).where(OAuthToken.provider == provider))
+def accounts(db: Session, provider: str) -> list[OAuthToken]:
+    return list(
+        db.scalars(
+            select(OAuthToken)
+            .where(OAuthToken.provider == provider)
+            .order_by(OAuthToken.account)
+        )
+    )
+
+
+def get_valid_access_token(
+    db: Session, provider: str, account: str = ""
+) -> str | None:
+    """Access token desencriptado da conta, renovado automaticamente se a expirar."""
+    row = db.scalar(
+        select(OAuthToken).where(
+            OAuthToken.provider == provider, OAuthToken.account == account
+        )
+    )
     if row is None:
         return None
     if _aware(row.expires_at) - EXPIRY_BUFFER > _utcnow():
         return decrypt(row.access_token)
     new = _REFRESH[provider](decrypt(row.refresh_token))
-    row = save_token(db, provider, new)
+    row = save_token(db, provider, new, account)
     return decrypt(row.access_token)
 
 
 def status(db: Session) -> dict:
-    out = {}
-    for provider in ("google", "spotify"):
-        row = db.scalar(select(OAuthToken).where(OAuthToken.provider == provider))
-        out[provider] = {
-            "authenticated": row is not None,
-            "expires_at": _aware(row.expires_at).isoformat() if row else None,
-        }
-    return out
+    google_accounts = [
+        {"account": r.account, "expires_at": _aware(r.expires_at).isoformat()}
+        for r in accounts(db, "google")
+    ]
+    spotify_rows = accounts(db, "spotify")
+    return {
+        "google": {
+            "authenticated": bool(google_accounts),
+            "accounts": google_accounts,
+        },
+        "spotify": {
+            "authenticated": bool(spotify_rows),
+            "expires_at": _aware(spotify_rows[0].expires_at).isoformat()
+            if spotify_rows
+            else None,
+        },
+    }

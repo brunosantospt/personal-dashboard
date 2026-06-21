@@ -29,8 +29,10 @@ def google_callback(
     valid, _ = pop_state(state)
     if not valid:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "state inválido ou expirado")
-    tokens.save_token(db, "google", google.exchange_code(code))
-    return {"provider": "google", "status": "connected"}
+    token = google.exchange_code(code)
+    email = google.userinfo(token["access_token"]).get("email", "")
+    tokens.save_token(db, "google", token, account=email)
+    return {"provider": "google", "account": email, "status": "connected"}
 
 
 # ---- Spotify (Authorization Code + PKCE) ----

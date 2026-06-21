@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -24,12 +24,18 @@ class Setting(Base):
 
 
 class OAuthToken(Base):
-    """Tokens OAuth — encriptados (Fernet). Nunca expostos ao frontend."""
+    """Tokens OAuth — encriptados (Fernet). Nunca expostos ao frontend.
+
+    Uma linha por (provider, account). Para Google, `account` é o email da conta
+    (suporta várias: pessoal + trabalho). Para Spotify, `account` fica vazio (conta única).
+    """
 
     __tablename__ = "oauth_tokens"
+    __table_args__ = (UniqueConstraint("provider", "account", name="uq_provider_account"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    provider: Mapped[str] = mapped_column(String, unique=True, index=True)  # google | spotify
+    provider: Mapped[str] = mapped_column(String, index=True)  # google | spotify
+    account: Mapped[str] = mapped_column(String, default="", index=True)  # email (google) | ""
     access_token: Mapped[str] = mapped_column(Text)
     refresh_token: Mapped[str] = mapped_column(Text)
     expires_at: Mapped[datetime] = mapped_column(DateTime)

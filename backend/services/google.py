@@ -6,7 +6,10 @@ from ..config import settings
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
+USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",  # detetar a conta (pessoal/trabalho)
     "https://www.googleapis.com/auth/calendar.readonly",
     "https://www.googleapis.com/auth/tasks.readonly",
 ]
@@ -18,11 +21,21 @@ def authorization_url(state: str) -> str:
         "redirect_uri": settings.google_redirect_uri,
         "response_type": "code",
         "scope": " ".join(SCOPES),
-        "access_type": "offline",  # necessário para receber refresh_token
-        "prompt": "consent",       # garante refresh_token mesmo em re-auth
+        "access_type": "offline",            # necessário para receber refresh_token
+        "prompt": "select_account consent",  # deixa escolher a conta + garante refresh_token
         "state": state,
     }
     return f"{AUTH_URL}?{urlencode(params)}"
+
+
+def userinfo(access_token: str) -> dict:
+    resp = httpx.get(
+        USERINFO_URL,
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=10,
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 
 def exchange_code(code: str) -> dict:
