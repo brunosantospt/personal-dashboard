@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Body, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -68,6 +68,20 @@ def list_photos():
         if p.is_file() and p.suffix.lower() in IMAGE_EXTS
     )
     return {"photos": photos}
+
+
+@app.post("/api/tasks/complete", tags=["tasks"])
+def complete_task(body: dict = Body(...), db: Session = Depends(get_db)):
+    account, task_id = body.get("account"), body.get("id")
+    if not account or not task_id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "account e id obrigatórios")
+    try:
+        data.complete_task(db, account, task_id)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in (401, 403):
+            raise HTTPException(403, "Sem permissão de escrita — re-autentica a conta Google")
+        raise HTTPException(502, f"Erro Google ({e.response.status_code})")
+    return {"status": "ok"}
 
 
 @app.post("/api/spotify/{action}", tags=["spotify"])

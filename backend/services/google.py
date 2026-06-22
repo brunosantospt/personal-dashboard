@@ -11,7 +11,7 @@ SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.email",  # detetar a conta (pessoal/trabalho)
     "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/tasks.readonly",
+    "https://www.googleapis.com/auth/tasks",  # leitura + escrita (marcar tarefas concluídas)
 ]
 
 

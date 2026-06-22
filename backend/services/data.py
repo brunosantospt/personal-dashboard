@@ -119,11 +119,25 @@ def tasks_pending(db: Session) -> list[dict]:
             if t.get("status") == "completed":
                 continue
             out.append({
-                "title": t.get("title"), "due": t.get("due"),
+                "id": t.get("id"), "title": t.get("title"), "due": t.get("due"),
                 "account": account, "label": _label(account),
             })
     out.sort(key=lambda t: _sort_key(t.get("due")))
     return out
+
+
+def complete_task(db: Session, account: str, task_id: str) -> None:
+    """Marca uma tarefa como concluída no Google Tasks (lista @default da conta)."""
+    token = tokens.get_valid_access_token(db, "google", account)
+    if not token:
+        raise PermissionError("conta Google não ligada")
+    r = httpx.patch(
+        f"{TASKS_URL}/{task_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"status": "completed"},
+        timeout=10,
+    )
+    r.raise_for_status()
 
 
 def spotify_now(db: Session) -> dict | None:

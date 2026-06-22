@@ -104,9 +104,13 @@ body {
 .dot, .check { flex: none; }
 .dot { margin-top: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 .check {
-  margin-top: 4px; width: 14px; height: 14px; border-radius: 4px;
+  margin-top: 4px; width: 16px; height: 16px; border-radius: 4px;
   border: 2px solid var(--muted); background: transparent;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
 }
+.check:hover { transform: scale(1.12); }
+.check.done { background: var(--accent); }
+.list li.completing { opacity: 0.4; transition: opacity 0.5s; }
 
 /* tag da conta (Work / Pessoal) por item */
 .tag {

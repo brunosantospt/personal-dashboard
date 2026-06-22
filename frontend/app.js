@@ -106,11 +106,40 @@ function renderCalendar(events) {
 
 // --- Tarefas: card que vira 180° entre as duas contas (Work / Pessoal) ---
 function taskItemHtml(t) {
-  return `<li><span class="check" style="border-color:${colorFor(t.account)}"></span><div>
+  return `<li><span class="check" role="button" tabindex="0" data-id="${escapeHtml(t.id || "")}" data-account="${escapeHtml(t.account || "")}" style="border-color:${colorFor(t.account)}"></span><div>
     <div class="li-title">${escapeHtml(t.title || "")}</div>
     ${t.due ? `<div class="muted">${fmtWhen(t.due)}</div>` : ""}
   </div></li>`;
 }
+
+async function completeTask(check) {
+  if (check.classList.contains("done") || !check.dataset.id) return;
+  check.classList.add("done");
+  check.style.background = check.style.borderColor;  // preenche com a cor da conta
+  try {
+    const r = await fetch("/api/tasks/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account: check.dataset.account, id: check.dataset.id }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
+    check.closest("li")?.classList.add("completing");
+    setTimeout(refresh, 700);  // some no próximo refresh (Google já a tem concluída)
+  } catch (e) {
+    check.classList.remove("done");  // reverte se falhar
+    check.style.background = "";
+    console.warn("não foi possível concluir a tarefa:", e.message);
+  }
+}
+
+// delegação nos <ul> (sobrevive aos re-renders)
+["front-list", "back-list"].forEach((id) => {
+  const ul = $(id);
+  ul.addEventListener("click", (e) => {
+    const check = e.target.closest(".check");
+    if (check) completeTask(check);
+  });
+});
 
 function renderTaskList(el, items) {
   el.innerHTML = items.length ? items.map(taskItemHtml).join("") : '<li class="muted">Sem tarefas</li>';
