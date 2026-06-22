@@ -12,6 +12,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",  # detetar a conta (pessoal/trabalho)
     "https://www.googleapis.com/auth/calendar.readonly",
     "https://www.googleapis.com/auth/tasks",  # leitura + escrita (marcar tarefas concluídas)
+    "https://www.googleapis.com/auth/drive.readonly",  # carousel de fotos a partir de pasta do Drive
 ]
 
 

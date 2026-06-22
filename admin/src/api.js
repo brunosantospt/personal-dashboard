@@ -31,4 +31,6 @@ export const api = {
   putAppearance: (v) => req("PUT", "/admin/appearance", v),
   putLayout: (v) => req("PUT", "/admin/layout", v),
   putWidgets: (v) => req("PUT", "/admin/widgets", v),
+  driveFolders: (account) =>
+    req("GET", `/admin/drive/folders?account=${encodeURIComponent(account)}`),
 };

@@ -1,9 +1,10 @@
+import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..services import admin_auth, config_store, tokens
+from ..services import admin_auth, config_store, drive, tokens
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 protected = [Depends(admin_auth.require_admin)]
@@ -51,3 +52,16 @@ def put_layout(body: dict = Body(...), db: Session = Depends(get_db)):
 @router.put("/widgets", dependencies=protected)
 def put_widgets(body: dict = Body(...), db: Session = Depends(get_db)):
     return config_store.update_section(db, "widgets", body)
+
+
+@router.get("/drive/folders", dependencies=protected)
+def drive_folders(account: str, db: Session = Depends(get_db)):
+    """Pastas do Drive da conta — para escolher a fonte do carousel."""
+    try:
+        return {"folders": drive.list_folders(db, account)}
+    except PermissionError:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "conta não ligada")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in (401, 403):
+            raise HTTPException(403, "Sem acesso ao Drive — re-autentica a conta Google")
+        raise HTTPException(502, f"Erro Drive ({e.response.status_code})")

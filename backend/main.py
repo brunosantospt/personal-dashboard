@@ -4,13 +4,14 @@ from pathlib import Path
 import httpx
 from fastapi import Body, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import get_db, init_db
 from .routers import admin, auth, ws
-from .services import config_store, data, spotify, tokens
+from .services import config_store, data, drive, spotify, tokens
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
@@ -61,13 +62,35 @@ def dashboard_data(db: Session = Depends(get_db)):
 
 
 @app.get("/api/photos", tags=["photos"])
-def list_photos():
+def list_photos(db: Session = Depends(get_db)):
+    drive_cfg = config_store.get_config(db)["widgets"]["photos"].get("drive") or {}
+    account, folder_id = drive_cfg.get("account"), drive_cfg.get("folder_id")
+    if account and folder_id:
+        try:
+            files = drive.list_images(db, account, folder_id)
+            return {"photos": [f"/api/photos/drive/{account}/{f['id']}" for f in files]}
+        except Exception:
+            return {"photos": []}  # Drive indisponível -> carousel vazio (resiliente)
     photos = sorted(
         f"/photos/{p.name}"
         for p in PHOTOS_DIR.iterdir()
         if p.is_file() and p.suffix.lower() in IMAGE_EXTS
     )
     return {"photos": photos}
+
+
+@app.get("/api/photos/drive/{account}/{file_id}", tags=["photos"])
+def drive_photo(account: str, file_id: str, db: Session = Depends(get_db)):
+    cfg = config_store.get_config(db)["widgets"]["photos"].get("drive") or {}
+    if cfg.get("account") != account or not cfg.get("folder_id"):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "fonte não configurada")
+    try:
+        path, media_type = drive.fetch_image(db, account, file_id, cfg["folder_id"])
+    except PermissionError:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "acesso negado")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, f"Erro Drive ({e.response.status_code})")
+    return FileResponse(path, media_type=media_type)
 
 
 @app.post("/api/tasks/complete", tags=["tasks"])

@@ -25,6 +25,8 @@ dist/
 # Fotos do carousel — pessoais, nunca no git (exceto o placeholder da pasta)
 photos/*
 !photos/.gitkeep
+# Cache local das fotos do Google Drive
+photos_cache/
 
 # OS / editor
 .DS_Store

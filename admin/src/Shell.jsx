@@ -3,12 +3,14 @@ import Conexoes from "./sections/Conexoes.jsx";
 import Aparencia from "./sections/Aparencia.jsx";
 import Layout from "./sections/Layout.jsx";
 import Widgets from "./sections/Widgets.jsx";
+import Fotos from "./sections/Fotos.jsx";
 
 const SECTIONS = [
   { id: "conexoes", label: "Conexões", Comp: Conexoes },
   { id: "aparencia", label: "Aparência", Comp: Aparencia },
   { id: "layout", label: "Layout", Comp: Layout },
   { id: "widgets", label: "Widgets", Comp: Widgets },
+  { id: "fotos", label: "Fotos", Comp: Fotos },
 ];
 
 export default function Shell({ onLogout }) {

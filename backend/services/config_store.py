@@ -34,7 +34,12 @@ def _defaults() -> dict:
                 "hide": list(settings.calendar_hide),
             },
             "tasks": {"enabled": True, "done_window_hours": 2},
-            "photos": {"enabled": True, "interval_seconds": 8},
+            "photos": {
+                "enabled": True,
+                "interval_seconds": 8,
+                # se drive.folder_id estiver definido, o carousel usa o Drive; senão a pasta local
+                "drive": {"account": "", "folder_id": "", "folder_name": ""},
+            },
             "spotify": {"enabled": True},
         },
     }
