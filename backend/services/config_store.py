@@ -15,14 +15,15 @@ def _defaults() -> dict:
     return {
         "appearance": {"theme": "dark", "accent": "#5eead4", "font_scale": 1.0},
         "layout": {
+            # grelha fixa 12 colunas x 12 linhas (canvas WYSIWYG no admin)
             "cols": 12,
-            "row_height": 80,
+            "rows": 12,
             # posição/tamanho de cada widget na grelha (drag/resize no admin)
             "items": {
-                "weather": {"x": 0, "y": 0, "w": 4, "h": 3},
-                "photos": {"x": 0, "y": 3, "w": 4, "h": 5},
-                "calendar": {"x": 4, "y": 0, "w": 4, "h": 8},
-                "tasks": {"x": 8, "y": 0, "w": 4, "h": 8},
+                "weather": {"x": 0, "y": 0, "w": 4, "h": 4},
+                "photos": {"x": 0, "y": 4, "w": 4, "h": 8},
+                "calendar": {"x": 4, "y": 0, "w": 4, "h": 12},
+                "tasks": {"x": 8, "y": 0, "w": 4, "h": 12},
             },
         },
         "widgets": {

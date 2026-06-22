@@ -257,9 +257,10 @@ function applyConfig(cfg) {
   const layout = cfg.layout || {};
   const grid = document.querySelector(".grid");
   const cols = layout.cols || 12;
+  const rows = layout.rows || 12;
   grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.style.gridAutoRows = `${layout.row_height || 80}px`;
-  grid.style.gap = "10px";  // igual à margin do editor (admin)
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;  // linhas distribuídas pelo ecrã
+  grid.style.gap = "8px";  // igual à margin do editor (admin)
   Object.entries(layout.items || {}).forEach(([name, p]) => {
     const el = grid.querySelector(`[data-widget="${name}"]`);
     if (el) {
