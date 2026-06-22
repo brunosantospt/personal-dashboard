@@ -14,7 +14,17 @@ def _defaults() -> dict:
     """Config inicial. Os valores arrancam do .env e são sobreponíveis pelo admin."""
     return {
         "appearance": {"theme": "dark", "accent": "#5eead4", "font_scale": 1.0},
-        "layout": {"columns": 3, "order": ["weather", "calendar", "tasks", "photos"]},
+        "layout": {
+            "cols": 12,
+            "row_height": 80,
+            # posição/tamanho de cada widget na grelha (drag/resize no admin)
+            "items": {
+                "weather": {"x": 0, "y": 0, "w": 4, "h": 3},
+                "photos": {"x": 0, "y": 3, "w": 4, "h": 5},
+                "calendar": {"x": 4, "y": 0, "w": 4, "h": 8},
+                "tasks": {"x": 8, "y": 0, "w": 4, "h": 8},
+            },
+        },
         "widgets": {
             "weather": {"enabled": True, "lat": settings.location_lat, "lon": settings.location_lon},
             "calendar": {

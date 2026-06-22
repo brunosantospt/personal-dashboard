@@ -45,7 +45,7 @@ export default function Shell({ onLogout }) {
         </button>
       </aside>
 
-      <main className="flex-1 p-8 max-w-3xl">
+      <main className="flex-1 p-8 max-w-5xl">
         <Active />
       </main>
     </div>

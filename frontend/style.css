@@ -70,6 +70,11 @@ body {
   border-radius: 18px;
   padding: 24px;
   backdrop-filter: blur(6px);
+  /* grid item: preenche a célula definida no editor de layout; conteúdo faz scroll */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .card h2 {
@@ -90,7 +95,7 @@ body {
 .wx-icon { font-size: 2.2rem; }
 
 /* listas */
-.list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.list { list-style: none; display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; }
 .list li { display: flex; gap: 12px; align-items: flex-start; font-size: 1.1rem; }
 .li-title { font-weight: 500; }
 .dot, .check { flex: none; }
@@ -110,11 +115,12 @@ body {
 
 /* card de tarefas com flip 3D entre contas */
 .card.flip { background: none; border: none; padding: 0; backdrop-filter: none; perspective: 1400px; }
-.flip-inner { position: relative; transition: transform 0.6s; transform-style: preserve-3d; min-height: 140px; }
+.flip-inner { position: relative; transition: transform 0.6s; transform-style: preserve-3d; flex: 1; min-height: 0; }
 .flip-face {
   position: absolute; inset: 0; backface-visibility: hidden;
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 18px; padding: 24px;
+  display: flex; flex-direction: column; overflow: hidden;
 }
 .flip-face.back { transform: rotateY(180deg); }
 .card.flip.flipped .flip-inner { transform: rotateY(180deg); }

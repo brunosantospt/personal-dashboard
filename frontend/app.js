@@ -113,12 +113,6 @@ function setFaceLabel(el, account) {
   el.style.color = colorFor(account);
 }
 
-function setFlipHeight() {
-  const inner = $("tasks-inner");
-  inner.style.height = "auto";  // deixa colapsar para medir o conteúdo real
-  inner.style.height = Math.max($("tasks-front").scrollHeight, $("tasks-back").scrollHeight) + "px";
-}
-
 function renderTasks(tasks) {
   tasks = tasks || [];
   const accts = Object.keys(accountColors).sort();
@@ -135,13 +129,11 @@ function renderTasks(tasks) {
     renderTaskList($("front-list"), tasks);
     setFaceLabel($("front-label"), accts[0] || "");
   }
-  setFlipHeight();
 }
 
 document.querySelectorAll(".flip-btn").forEach((btn) =>
   btn.addEventListener("click", () => $("tasks-flip").classList.toggle("flipped"))
 );
-window.addEventListener("resize", setFlipHeight);
 
 // --- Spotify (com avanço client-side da barra entre polls) ---
 let spotify = null;
@@ -264,10 +256,16 @@ function applyConfig(cfg) {
 
   const layout = cfg.layout || {};
   const grid = document.querySelector(".grid");
-  if (layout.columns) grid.style.gridTemplateColumns = `repeat(${layout.columns}, 1fr)`;
-  (layout.order || []).forEach((name, i) => {
+  const cols = layout.cols || 12;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridAutoRows = `${layout.row_height || 80}px`;
+  grid.style.gap = "10px";  // igual à margin do editor (admin)
+  Object.entries(layout.items || {}).forEach(([name, p]) => {
     const el = grid.querySelector(`[data-widget="${name}"]`);
-    if (el) el.style.order = i;
+    if (el) {
+      el.style.gridColumn = `${p.x + 1} / span ${p.w}`;
+      el.style.gridRow = `${p.y + 1} / span ${p.h}`;
+    }
   });
 
   const widgets = cfg.widgets || {};

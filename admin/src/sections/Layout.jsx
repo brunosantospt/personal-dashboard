@@ -1,43 +1,45 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import GridLayout, { WidthProvider } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 import { api } from "../api";
-import { Row, SaveBar } from "./Aparencia.jsx";
+import { SaveBar } from "./Aparencia.jsx";
 
-const LABELS = {
-  weather: "Meteorologia",
-  calendar: "Eventos",
-  tasks: "Tarefas",
-  photos: "Fotos",
+const Grid = WidthProvider(GridLayout);
+
+const META = {
+  weather: { label: "Meteorologia", color: "#5eead4" },
+  calendar: { label: "Eventos", color: "#f0883e" },
+  tasks: { label: "Tarefas", color: "#a78bfa" },
+  photos: { label: "Fotos", color: "#f87171" },
 };
 
+const toLayout = (items) =>
+  Object.entries(items).map(([i, p]) => ({ i, ...p, minW: 2, minH: 2 }));
+
+const toItems = (layout) =>
+  Object.fromEntries(layout.map((l) => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }]));
+
 export default function Layout() {
-  const [layout, setLayout] = useState(null);
+  const [cfg, setCfg] = useState(null);
+  const [layout, setLayoutState] = useState([]);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
-  const dragIdx = useRef(null);
 
   useEffect(() => {
-    api.getConfig().then((c) => setLayout(c.layout)).catch((e) => setErr(e.message));
+    api
+      .getConfig()
+      .then((c) => {
+        setCfg(c.layout);
+        setLayoutState(toLayout(c.layout.items));
+      })
+      .catch((e) => setErr(e.message));
   }, []);
-
-  const change = (next) => {
-    setLayout(next);
-    setSaved(false);
-  };
-
-  function onDrop(i) {
-    const from = dragIdx.current;
-    if (from === null || from === i) return;
-    const order = [...layout.order];
-    const [moved] = order.splice(from, 1);
-    order.splice(i, 0, moved);
-    change({ ...layout, order });
-    dragIdx.current = null;
-  }
 
   async function save() {
     setErr("");
     try {
-      await api.putLayout(layout);
+      await api.putLayout({ ...cfg, items: toItems(layout) });
       setSaved(true);
     } catch (e) {
       setErr(e.message);
@@ -45,45 +47,45 @@ export default function Layout() {
   }
 
   if (err) return <p className="text-red-400">Erro: {err}</p>;
-  if (!layout) return <p className="text-zinc-500">A carregar…</p>;
+  if (!cfg) return <p className="text-zinc-500">A carregar…</p>;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Layout</h2>
-
-      <Row label="Número de colunas">
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              onClick={() => change({ ...layout, columns: n })}
-              className={`w-10 h-10 rounded-lg text-sm ${
-                layout.columns === n ? "bg-emerald-500 text-emerald-950" : "bg-zinc-800 text-zinc-300"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </Row>
-
+    <div className="space-y-4 max-w-none">
       <div>
-        <p className="text-sm text-zinc-300 mb-2">Ordem dos widgets (arrasta para reordenar)</p>
-        <ul className="space-y-2">
-          {layout.order.map((w, i) => (
-            <li
-              key={w}
-              draggable
-              onDragStart={() => (dragIdx.current = i)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => onDrop(i)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 cursor-grab active:cursor-grabbing"
+        <h2 className="text-lg font-semibold">Layout</h2>
+        <p className="text-sm text-zinc-500">
+          Arrasta os widgets para mover e puxa o canto inferior direito para redimensionar.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-2">
+        <Grid
+          className="layout"
+          layout={layout}
+          cols={cfg.cols}
+          rowHeight={cfg.row_height}
+          margin={[10, 10]}
+          onLayoutChange={(l) => {
+            setLayoutState(l);
+            setSaved(false);
+          }}
+          isBounded
+          compactType={null}
+        >
+          {layout.map((l) => (
+            <div
+              key={l.i}
+              className="rounded-lg flex items-center justify-center text-sm font-semibold select-none"
+              style={{
+                background: `${META[l.i]?.color || "#5eead4"}22`,
+                border: `1px solid ${META[l.i]?.color || "#5eead4"}`,
+                color: META[l.i]?.color || "#5eead4",
+              }}
             >
-              <span className="text-zinc-600">⠿</span>
-              <span className="text-sm">{LABELS[w] || w}</span>
-            </li>
+              {META[l.i]?.label || l.i}
+            </div>
           ))}
-        </ul>
+        </Grid>
       </div>
 
       <SaveBar onSave={save} saved={saved} />
