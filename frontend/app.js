@@ -52,12 +52,10 @@ function renderWeather(w) {
   const [icon, label] = weatherInfo(w.weather_code);
   $("weather").innerHTML = `
     <div class="temp">${Math.round(w.temperature)}°</div>
+    <span class="wx-icon">${icon}</span>
     <div class="wx">
-      <span class="wx-icon">${icon}</span>
-      <div class="wx-text">
-        <div>${label}</div>
-        <div class="muted">vento ${Math.round(w.wind_speed)} km/h</div>
-      </div>
+      <div>${label}</div>
+      <div class="muted">vento ${Math.round(w.wind_speed)} km/h</div>
     </div>`;
 }
 
