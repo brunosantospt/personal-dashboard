@@ -63,19 +63,27 @@ function renderWeather(w) {
 const PALETTE = ["#5eead4", "#f0883e", "#a78bfa", "#f87171"];
 let accountColors = {};
 let accountLabels = {};
+let accountIds = [];  // contas Google ligadas (autoritativo), ordenadas
 
 function computeAccountColors(data) {
-  const accts = new Set();
   accountLabels = {};
-  const collect = (item) => {
-    if (!item.account) return;
-    accts.add(item.account);
-    if (item.label) accountLabels[item.account] = item.label;
-  };
-  (data.calendar || []).forEach(collect);
-  (data.tasks || []).forEach(collect);
+  let ids;
+  if (Array.isArray(data.accounts) && data.accounts.length) {
+    // lista autoritativa do backend (contas ligadas, tenham itens ou não)
+    data.accounts.forEach((a) => { if (a.label) accountLabels[a.account] = a.label; });
+    ids = data.accounts.map((a) => a.account);
+  } else {
+    // fallback: deriva dos itens
+    const set = new Set();
+    (data.calendar || []).forEach((e) => e.account && set.add(e.account));
+    (data.tasks || []).forEach((t) => {
+      if (t.account) { set.add(t.account); if (t.label) accountLabels[t.account] = t.label; }
+    });
+    ids = [...set];
+  }
+  accountIds = ids.slice().sort();
   accountColors = {};
-  [...accts].sort().forEach((a, i) => { accountColors[a] = PALETTE[i % PALETTE.length]; });
+  accountIds.forEach((a, i) => { accountColors[a] = PALETTE[i % PALETTE.length]; });
 }
 
 const colorFor = (account) => accountColors[account] || "var(--accent)";
@@ -115,7 +123,7 @@ function setFaceLabel(el, account) {
 
 function renderTasks(tasks) {
   tasks = tasks || [];
-  const accts = Object.keys(accountColors).sort();
+  const accts = accountIds;
   const flip = $("tasks-flip");
   if (accts.length === 2) {  // duas contas -> flip entre elas
     flip.dataset.mode = "flip";

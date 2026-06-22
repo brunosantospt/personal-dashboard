@@ -172,6 +172,9 @@ def dashboard(db: Session) -> dict:
         except Exception as e:  # falha de uma API não derruba o resto
             out[key] = default
             errors[key] = str(e)
+    # Contas Google ligadas (autoritativo) — o frontend usa para o flip Work/Pessoal,
+    # mesmo que uma conta não tenha itens visíveis agora.
+    out["accounts"] = [{"account": a, "label": _label(a)} for a in _google_accounts(db)]
     out["errors"] = errors
     out["server_time"] = dt.datetime.now(dt.timezone.utc).isoformat()
     return out
