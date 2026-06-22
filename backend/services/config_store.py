@@ -33,7 +33,7 @@ def _defaults() -> dict:
                 "horizon_days": settings.calendar_horizon_days,
                 "hide": list(settings.calendar_hide),
             },
-            "tasks": {"enabled": True},
+            "tasks": {"enabled": True, "done_window_hours": 2},
             "photos": {"enabled": True, "interval_seconds": 8},
             "spotify": {"enabled": True},
         },

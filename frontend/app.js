@@ -105,13 +105,9 @@ function renderCalendar(events) {
 }
 
 // --- Tarefas: card que vira 180° entre as duas contas (Work / Pessoal) ---
-let lastTasks = [];            // últimas tarefas vivas (do /api/dashboard)
-const taskById = {};           // id -> task (para reconstruir as concluídas)
-const completed = new Map();   // id -> { task, at } concluídas há pouco
-const GRACE_MS = 6000;         // tempo que ficam visíveis (riscadas) antes de sumir
-
+// O backend devolve pendentes em cima e concluídas (até N horas) riscadas no fim.
 function taskItemHtml(t) {
-  const done = !!t._done;
+  const done = !!t.done;
   const color = colorFor(t.account);
   return `<li class="${done ? "completing" : ""}">
     <span class="check ${done ? "done" : ""}" role="button" tabindex="0"
@@ -125,22 +121,20 @@ function taskItemHtml(t) {
 
 async function completeTask(check) {
   const id = check.dataset.id;
-  const account = check.dataset.account;
-  if (!id || completed.has(id)) return;
-  // mostra logo como concluída (riscada/esbatida) e mantém visível durante a janela
-  completed.set(id, { task: taskById[id] || { id, account, title: check.closest("li")?.querySelector(".li-title")?.textContent }, at: Date.now() });
-  renderTasks(lastTasks);
-  setTimeout(() => renderTasks(lastTasks), GRACE_MS + 150);
+  if (!id || check.classList.contains("done")) return;
+  check.classList.add("done");                       // feedback imediato
+  check.style.background = check.style.borderColor;
   try {
     const r = await fetch("/api/tasks/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account, id }),
+      body: JSON.stringify({ account: check.dataset.account, id }),
     });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
+    setTimeout(refresh, 500);  // traz a verdade do servidor (riscada, movida para o fim)
   } catch (e) {
-    completed.delete(id);  // reverte se falhar
-    renderTasks(lastTasks);
+    check.classList.remove("done");  // reverte se falhar
+    check.style.background = "";
     console.warn("não foi possível concluir a tarefa:", e.message);
   }
 }
@@ -162,36 +156,21 @@ function setFaceLabel(el, account) {
   el.style.color = colorFor(account);
 }
 
-// junta as tarefas vivas (exceto as marcadas) com as concluídas há pouco (riscadas)
-function tasksForAccount(tasks, account) {
-  const now = Date.now();
-  const live = tasks.filter((t) => t.account === account && !completed.has(t.id));
-  const recent = [];
-  for (const [id, e] of completed) {
-    if (now - e.at > GRACE_MS) { completed.delete(id); continue; }
-    if (e.task && e.task.account === account) recent.push({ ...e.task, _done: true });
-  }
-  return [...live, ...recent];
-}
-
 function renderTasks(tasks) {
   tasks = tasks || [];
-  lastTasks = tasks;
-  tasks.forEach((t) => { if (t.id) taskById[t.id] = t; });
   const accts = accountIds;
   const flip = $("tasks-flip");
   if (accts.length === 2) {  // duas contas -> flip entre elas
     flip.dataset.mode = "flip";
-    renderTaskList($("front-list"), tasksForAccount(tasks, accts[0]));
+    renderTaskList($("front-list"), tasks.filter((t) => t.account === accts[0]));
     setFaceLabel($("front-label"), accts[0]);
-    renderTaskList($("back-list"), tasksForAccount(tasks, accts[1]));
+    renderTaskList($("back-list"), tasks.filter((t) => t.account === accts[1]));
     setFaceLabel($("back-label"), accts[1]);
   } else {  // 1 conta (ou nenhuma/+ de 2) -> sem flip, mostra tudo
     flip.dataset.mode = "single";
     flip.classList.remove("flipped");
-    const acc = accts[0] || "";
-    renderTaskList($("front-list"), acc ? tasksForAccount(tasks, acc) : tasks);
-    setFaceLabel($("front-label"), acc);
+    renderTaskList($("front-list"), tasks);
+    setFaceLabel($("front-label"), accts[0] || "");
   }
 }
 

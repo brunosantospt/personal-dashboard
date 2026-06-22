@@ -98,32 +98,61 @@ def calendar(db: Session, cfg: dict) -> list[dict]:
     return out[:6]
 
 
-def tasks_pending(db: Session) -> list[dict]:
-    """Tarefas pendentes, juntas de todas as contas Google."""
-    out: list[dict] = []
+def tasks_pending(db: Session, cfg: dict) -> list[dict]:
+    """Tarefas pendentes + concluídas nas últimas N horas (estas riscadas, no fim)."""
+    window_h = cfg.get("done_window_hours", 2)
+    completed_min = (
+        dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=window_h)
+    ).isoformat()
+    pending: list[dict] = []
+    done: list[dict] = []
     for account in _google_accounts(db):
         token = tokens.get_valid_access_token(db, "google", account)
         if not token:
             continue
+        headers = {"Authorization": f"Bearer {token}"}
+        label = _label(account)
+        # pendentes
         try:
             r = httpx.get(
                 TASKS_URL,
                 params={"maxResults": 20, "showCompleted": "false"},
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
+                headers=headers, timeout=10,
             )
             r.raise_for_status()
+            for t in r.json().get("items", []):
+                if t.get("status") == "completed":
+                    continue
+                pending.append({
+                    "id": t.get("id"), "title": t.get("title"), "due": t.get("due"),
+                    "account": account, "label": label, "done": False,
+                })
         except Exception:
-            continue
-        for t in r.json().get("items", []):
-            if t.get("status") == "completed":
-                continue
-            out.append({
-                "id": t.get("id"), "title": t.get("title"), "due": t.get("due"),
-                "account": account, "label": _label(account),
-            })
-    out.sort(key=lambda t: _sort_key(t.get("due")))
-    return out
+            pass
+        # concluídas recentemente (janela)
+        try:
+            r = httpx.get(
+                TASKS_URL,
+                params={
+                    "maxResults": 20, "showCompleted": "true",
+                    "showHidden": "true", "completedMin": completed_min,
+                },
+                headers=headers, timeout=10,
+            )
+            r.raise_for_status()
+            for t in r.json().get("items", []):
+                if t.get("status") != "completed":
+                    continue
+                done.append({
+                    "id": t.get("id"), "title": t.get("title"), "due": t.get("due"),
+                    "account": account, "label": label, "done": True,
+                    "completed": t.get("completed"),
+                })
+        except Exception:
+            pass
+    pending.sort(key=lambda t: _sort_key(t.get("due")))
+    done.sort(key=lambda t: _sort_key(t.get("completed")), reverse=True)  # recentes primeiro
+    return pending + done  # pendentes em cima, concluídas no fim
 
 
 def complete_task(db: Session, account: str, task_id: str) -> None:
@@ -172,7 +201,7 @@ def dashboard(db: Session) -> dict:
     sources = {
         "weather": (lambda: weather(w["weather"]), None),
         "calendar": (lambda: calendar(db, w["calendar"]), []),
-        "tasks": (lambda: tasks_pending(db), []),
+        "tasks": (lambda: tasks_pending(db, w["tasks"]), []),
         "spotify": (lambda: spotify_now(db), None),
     }
     out: dict = {}
