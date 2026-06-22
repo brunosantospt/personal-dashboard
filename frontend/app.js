@@ -105,37 +105,49 @@ function renderCalendar(events) {
 }
 
 // --- Tarefas: card que vira 180° entre as duas contas (Work / Pessoal) ---
+let lastTasks = [];            // últimas tarefas vivas (do /api/dashboard)
+const taskById = {};           // id -> task (para reconstruir as concluídas)
+const completed = new Map();   // id -> { task, at } concluídas há pouco
+const GRACE_MS = 6000;         // tempo que ficam visíveis (riscadas) antes de sumir
+
 function taskItemHtml(t) {
-  return `<li><span class="check" role="button" tabindex="0" data-id="${escapeHtml(t.id || "")}" data-account="${escapeHtml(t.account || "")}" style="border-color:${colorFor(t.account)}"></span><div>
-    <div class="li-title">${escapeHtml(t.title || "")}</div>
-    ${t.due ? `<div class="muted">${fmtWhen(t.due)}</div>` : ""}
-  </div></li>`;
+  const done = !!t._done;
+  const color = colorFor(t.account);
+  return `<li class="${done ? "completing" : ""}">
+    <span class="check ${done ? "done" : ""}" role="button" tabindex="0"
+      data-id="${escapeHtml(t.id || "")}" data-account="${escapeHtml(t.account || "")}"
+      style="border-color:${color}${done ? `;background:${color}` : ""}"></span>
+    <div>
+      <div class="li-title"${done ? ' style="text-decoration:line-through"' : ""}>${escapeHtml(t.title || "")}</div>
+      ${t.due ? `<div class="muted">${fmtWhen(t.due)}</div>` : ""}
+    </div></li>`;
 }
 
 async function completeTask(check) {
-  if (check.classList.contains("done") || !check.dataset.id) return;
-  check.classList.add("done");
-  check.style.background = check.style.borderColor;  // preenche com a cor da conta
+  const id = check.dataset.id;
+  const account = check.dataset.account;
+  if (!id || completed.has(id)) return;
+  // mostra logo como concluída (riscada/esbatida) e mantém visível durante a janela
+  completed.set(id, { task: taskById[id] || { id, account, title: check.closest("li")?.querySelector(".li-title")?.textContent }, at: Date.now() });
+  renderTasks(lastTasks);
+  setTimeout(() => renderTasks(lastTasks), GRACE_MS + 150);
   try {
     const r = await fetch("/api/tasks/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account: check.dataset.account, id: check.dataset.id }),
+      body: JSON.stringify({ account, id }),
     });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
-    check.closest("li")?.classList.add("completing");
-    setTimeout(refresh, 700);  // some no próximo refresh (Google já a tem concluída)
   } catch (e) {
-    check.classList.remove("done");  // reverte se falhar
-    check.style.background = "";
+    completed.delete(id);  // reverte se falhar
+    renderTasks(lastTasks);
     console.warn("não foi possível concluir a tarefa:", e.message);
   }
 }
 
 // delegação nos <ul> (sobrevive aos re-renders)
 ["front-list", "back-list"].forEach((id) => {
-  const ul = $(id);
-  ul.addEventListener("click", (e) => {
+  $(id).addEventListener("click", (e) => {
     const check = e.target.closest(".check");
     if (check) completeTask(check);
   });
@@ -150,21 +162,36 @@ function setFaceLabel(el, account) {
   el.style.color = colorFor(account);
 }
 
+// junta as tarefas vivas (exceto as marcadas) com as concluídas há pouco (riscadas)
+function tasksForAccount(tasks, account) {
+  const now = Date.now();
+  const live = tasks.filter((t) => t.account === account && !completed.has(t.id));
+  const recent = [];
+  for (const [id, e] of completed) {
+    if (now - e.at > GRACE_MS) { completed.delete(id); continue; }
+    if (e.task && e.task.account === account) recent.push({ ...e.task, _done: true });
+  }
+  return [...live, ...recent];
+}
+
 function renderTasks(tasks) {
   tasks = tasks || [];
+  lastTasks = tasks;
+  tasks.forEach((t) => { if (t.id) taskById[t.id] = t; });
   const accts = accountIds;
   const flip = $("tasks-flip");
   if (accts.length === 2) {  // duas contas -> flip entre elas
     flip.dataset.mode = "flip";
-    renderTaskList($("front-list"), tasks.filter((t) => t.account === accts[0]));
+    renderTaskList($("front-list"), tasksForAccount(tasks, accts[0]));
     setFaceLabel($("front-label"), accts[0]);
-    renderTaskList($("back-list"), tasks.filter((t) => t.account === accts[1]));
+    renderTaskList($("back-list"), tasksForAccount(tasks, accts[1]));
     setFaceLabel($("back-label"), accts[1]);
   } else {  // 1 conta (ou nenhuma/+ de 2) -> sem flip, mostra tudo
     flip.dataset.mode = "single";
     flip.classList.remove("flipped");
-    renderTaskList($("front-list"), tasks);
-    setFaceLabel($("front-label"), accts[0] || "");
+    const acc = accts[0] || "";
+    renderTaskList($("front-list"), acc ? tasksForAccount(tasks, acc) : tasks);
+    setFaceLabel($("front-label"), acc);
   }
 }
 
