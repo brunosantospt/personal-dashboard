@@ -1,0 +1,18 @@
+# Segredos e dados — NUNCA na imagem (vêm das env vars / volume do Coolify)
+.env
+.env.*
+*.db
+*.sqlite*
+photos_cache/
+photos/*
+
+# Build artifacts (o admin é buildado dentro da imagem)
+admin/dist/
+admin/node_modules/
+.venv/
+**/__pycache__/
+
+# Repo / docs
+.git/
+deploy/
+*.docx

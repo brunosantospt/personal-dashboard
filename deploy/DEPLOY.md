@@ -1,5 +1,9 @@
 # Deploy — Personal Dashboard (Hetzner, HTTP por IP)
 
+> ⚠️ **OBSOLETO para o servidor atual.** A VPS 46.62.197.69 é um host **Coolify** —
+> usar **`deploy/COOLIFY.md`** (deploy como app Coolify, com HTTPS automático).
+> Este guia manual fica só como referência para uma VPS dedicada/vazia.
+
 Deploy inicial sem domínio: HTTP, acedido por `http://IP_DA_VPS/`.
 Os tokens OAuth migram do Mac (continuam a funcionar via refresh, independentes do host),
 por isso **não é preciso re-autenticar** no servidor.
@@ -30,7 +34,7 @@ rsync -avz --delete \
 
 ```bash
 ssh root@SERVER
-apt update && apt install -y python3-venv python3-pip   # Nginx já instalado
+apt update && apt install -y python3-venv python3-pip nginx
 cd /opt/dashboard
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip
