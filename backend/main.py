@@ -73,10 +73,11 @@ def list_photos():
 @app.post("/api/tasks/complete", tags=["tasks"])
 def complete_task(body: dict = Body(...), db: Session = Depends(get_db)):
     account, task_id = body.get("account"), body.get("id")
+    done = body.get("done", True)
     if not account or not task_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "account e id obrigatórios")
     try:
-        data.complete_task(db, account, task_id)
+        data.set_task_done(db, account, task_id, done)
     except httpx.HTTPStatusError as e:
         if e.response.status_code in (401, 403):
             raise HTTPException(403, "Sem permissão de escrita — re-autentica a conta Google")

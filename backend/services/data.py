@@ -155,15 +155,18 @@ def tasks_pending(db: Session, cfg: dict) -> list[dict]:
     return pending + done  # pendentes em cima, concluídas no fim
 
 
-def complete_task(db: Session, account: str, task_id: str) -> None:
-    """Marca uma tarefa como concluída no Google Tasks (lista @default da conta)."""
+def set_task_done(db: Session, account: str, task_id: str, done: bool = True) -> None:
+    """Marca/desmarca uma tarefa no Google Tasks (lista @default da conta).
+
+    status=needsAction limpa automaticamente a data de conclusão no Google.
+    """
     token = tokens.get_valid_access_token(db, "google", account)
     if not token:
         raise PermissionError("conta Google não ligada")
     r = httpx.patch(
         f"{TASKS_URL}/{task_id}",
         headers={"Authorization": f"Bearer {token}"},
-        json={"status": "completed"},
+        json={"status": "completed" if done else "needsAction"},
         timeout=10,
     )
     r.raise_for_status()

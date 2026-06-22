@@ -119,23 +119,28 @@ function taskItemHtml(t) {
     </div></li>`;
 }
 
-async function completeTask(check) {
+async function toggleTask(check) {
   const id = check.dataset.id;
-  if (!id || check.classList.contains("done")) return;
-  check.classList.add("done");                       // feedback imediato
-  check.style.background = check.style.borderColor;
+  if (!id) return;
+  const makeDone = !check.classList.contains("done");  // alterna conforme o estado
+  // feedback imediato
+  check.classList.toggle("done", makeDone);
+  check.style.background = makeDone ? check.style.borderColor : "";
+  const li = check.closest("li");
+  li?.classList.toggle("completing", makeDone);
+  const title = li?.querySelector(".li-title");
+  if (title) title.style.textDecoration = makeDone ? "line-through" : "";
   try {
     const r = await fetch("/api/tasks/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account: check.dataset.account, id }),
+      body: JSON.stringify({ account: check.dataset.account, id, done: makeDone }),
     });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
-    setTimeout(refresh, 500);  // traz a verdade do servidor (riscada, movida para o fim)
   } catch (e) {
-    check.classList.remove("done");  // reverte se falhar
-    check.style.background = "";
-    console.warn("não foi possível concluir a tarefa:", e.message);
+    console.warn("não foi possível atualizar a tarefa:", e.message);
+  } finally {
+    setTimeout(refresh, 400);  // sincroniza com a verdade do servidor (sucesso ou falha)
   }
 }
 
@@ -143,7 +148,7 @@ async function completeTask(check) {
 ["front-list", "back-list"].forEach((id) => {
   $(id).addEventListener("click", (e) => {
     const check = e.target.closest(".check");
-    if (check) completeTask(check);
+    if (check) toggleTask(check);
   });
 });
 
