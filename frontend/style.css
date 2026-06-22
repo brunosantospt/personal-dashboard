@@ -93,8 +93,13 @@ body {
 .card.weather { justify-content: center; }  /* sem título -> centra o conteúdo */
 .weather-body { display: flex; align-items: center; gap: 20px; }
 .temp { font-size: 3.5rem; font-weight: 300; font-variant-numeric: tabular-nums; }
-.wx { font-size: 1.1rem; line-height: 1.5; }
-.wx-icon { font-size: 2.2rem; }
+.wx { position: relative; font-size: 1.1rem; line-height: 1.4; }
+/* ícone como marca de água atrás do texto (poupa altura) */
+.wx-icon {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 3.4rem; opacity: 0.22; pointer-events: none;
+}
+.wx-text { position: relative; }
 
 /* listas */
 .list { list-style: none; display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; }

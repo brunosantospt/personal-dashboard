@@ -53,9 +53,11 @@ function renderWeather(w) {
   $("weather").innerHTML = `
     <div class="temp">${Math.round(w.temperature)}°</div>
     <div class="wx">
-      <div class="wx-icon">${icon}</div>
-      <div>${label}</div>
-      <div class="muted">vento ${Math.round(w.wind_speed)} km/h</div>
+      <span class="wx-icon">${icon}</span>
+      <div class="wx-text">
+        <div>${label}</div>
+        <div class="muted">vento ${Math.round(w.wind_speed)} km/h</div>
+      </div>
     </div>`;
 }
 
