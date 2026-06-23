@@ -33,7 +33,8 @@ body {
 }
 
 .dashboard {
-  height: 100vh;            /* fixo ao ecrã — nada sai dos limites */
+  height: 100vh;            /* fallback */
+  height: 100dvh;           /* estável quando a barra do browser do tablet mexe */
   display: flex;
   flex-direction: column;
   padding: 3vh 3vw;
@@ -147,10 +148,13 @@ body {
 
 /* carousel de fotos — foto inteira (contain) sobre cópia desfocada que preenche */
 .photos-card { position: relative; overflow: hidden; padding: 0; }
-.carousel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
+.carousel-slide {
+  position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease;
+  /* background-size cover: preenche sempre o bloco, corta o excesso, nunca estica
+     nem deixa espaços — robusto a reflows (ao contrário de <img> no WebView Android) */
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
 .carousel-slide.active { opacity: 1; }
-.slide-bg { display: none; }  /* preferência: cortar (cover) em vez de fundo desfocado */
-.slide-fg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* bloco smart home */
 .smarthome-card {

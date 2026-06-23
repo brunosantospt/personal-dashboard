@@ -255,9 +255,7 @@ let photoIdx = 0;
 let activeLayer = "a";
 
 function setSlide(layer, url) {
-  const slide = $(`slide-${layer}`);
-  slide.querySelector(".slide-bg").style.backgroundImage = `url("${url}")`;
-  slide.querySelector(".slide-fg").src = url;
+  $(`slide-${layer}`).style.backgroundImage = `url("${url}")`;
 }
 
 async function loadPhotoList() {
