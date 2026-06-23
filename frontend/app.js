@@ -334,10 +334,17 @@ function relayoutRows() {
   const rowPx = Math.max(8, (avail - (gridRows - 1) * GRID_GAP) / gridRows);
   grid.style.gridTemplateRows = `repeat(${gridRows}, ${rowPx}px)`;
 }
+// Observar o VIEWPORT (não a grelha, cuja altura fixo eu): a barra do browser do
+// tablet a esconder-se muda o viewport -> recalcular para a foto voltar a preencher.
 if (window.ResizeObserver) {
-  new ResizeObserver(relayoutRows).observe(document.querySelector(".grid"));
+  new ResizeObserver(relayoutRows).observe(document.querySelector(".dashboard"));
 }
 window.addEventListener("resize", relayoutRows);
+window.addEventListener("orientationchange", relayoutRows);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", relayoutRows);
+  window.visualViewport.addEventListener("scroll", relayoutRows);
+}
 
 function applyConfig(cfg) {
   const root = document.documentElement;
