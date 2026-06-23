@@ -1,5 +1,20 @@
 const $ = (id) => document.getElementById(id);
 
+// --- Manter o ecrã sempre ligado (kiosk) ---
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+  } catch (e) {
+    console.warn("wakeLock indisponível:", e.message);
+  }
+}
+requestWakeLock();
+// re-adquire quando a página volta a ficar visível (o lock liberta-se ao minimizar)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") requestWakeLock();
+});
+
 // --- Relógio + data (client-side, cada segundo) ---
 function tickClock() {
   const now = new Date();
