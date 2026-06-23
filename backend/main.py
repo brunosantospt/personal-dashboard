@@ -44,6 +44,16 @@ app.include_router(admin.router)
 app.include_router(ws.router)
 
 
+@app.middleware("http")
+async def no_cache_static(request, call_next):
+    """Frontend/admin (HTML/CSS/JS) sempre revalidado — mudanças aparecem sem cache presa."""
+    response = await call_next(request)
+    p = request.url.path
+    if p == "/" or p.startswith("/admin") or p.endswith((".html", ".css", ".js", ".json", ".webmanifest")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/api/health", tags=["system"])
 def health():
     return {"status": "ok", "service": "personal-dashboard", "version": app.version}
