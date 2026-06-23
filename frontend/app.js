@@ -375,19 +375,31 @@ const shBlinds = [
 ];
 const shClimate = [{ name: "Ar condicionado", on: false }];
 
+const SH_ICON = {
+  bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .9 1.7l.1.5h5.2l.1-.5c.1-.7.4-1.3.9-1.7A6 6 0 0 0 12 3z"/></svg>',
+  blind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 9h16M4 13h16M4 17h16"/></svg>',
+  ac: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10"/></svg>',
+};
+
 function renderSmartHome() {
   $("sh-lights").innerHTML = shLights.map((l, i) => `
-    <div class="sh-row"><span class="name">${l.name}</span>
-      <button class="sh-toggle ${l.on ? "on" : ""}" data-type="light" data-i="${i}"></button>
-    </div>`).join("");
-  $("sh-blinds").innerHTML = shBlinds.map((b, i) => `
-    <div class="sh-row"><span class="name">${b.name}</span>
-      <input class="sh-slider" type="range" min="0" max="100" value="${b.value}" data-i="${i}">
-      <span class="sh-val" id="blind-val-${i}">${b.value}%</span>
-    </div>`).join("");
+    <button class="sh-tile light ${l.on ? "on" : ""}" data-type="light" data-i="${i}">
+      <span class="sh-ico">${SH_ICON.bulb}</span>
+      <span class="nm">${l.name}</span>
+      <span class="st">${l.on ? "Ligada" : "Desligada"}</span>
+    </button>`).join("");
   $("sh-climate").innerHTML = shClimate.map((c, i) => `
-    <div class="sh-row"><span class="name">${c.name}</span>
-      <button class="sh-toggle ${c.on ? "on" : ""}" data-type="climate" data-i="${i}"></button>
+    <button class="sh-tile ac ${c.on ? "on" : ""}" data-type="climate" data-i="${i}">
+      <span class="sh-ico">${SH_ICON.ac}</span>
+      <span class="nm">${c.name}</span>
+      <span class="st">${c.on ? "Ligado" : "Desligado"}</span>
+    </button>`).join("");
+  $("sh-blinds").innerHTML = shBlinds.map((b, i) => `
+    <div class="sh-tile blind">
+      <span class="sh-ico">${SH_ICON.blind}</span>
+      <span class="nm">${b.name}</span>
+      <span class="st"><b id="blind-val-${i}">${b.value}</b>% aberto</span>
+      <input type="range" class="sh-slider" min="0" max="100" value="${b.value}" data-i="${i}">
     </div>`).join("");
 }
 
@@ -397,18 +409,21 @@ $("smarthome-card").addEventListener("click", () => {
 });
 $("sh-close").addEventListener("click", () => { $("sh-modal").hidden = true; });
 $("sh-modal").addEventListener("click", (e) => {
-  if (e.target.id === "sh-modal") $("sh-modal").hidden = true;  // clicar fora fecha
-  const btn = e.target.closest(".sh-toggle");
-  if (btn) {
-    const i = +btn.dataset.i;
-    if (btn.dataset.type === "light") shLights[i].on = !shLights[i].on;
-    else if (btn.dataset.type === "climate") shClimate[i].on = !shClimate[i].on;
-    btn.classList.toggle("on");
-  }
+  if (e.target.id === "sh-modal") { $("sh-modal").hidden = true; return; }  // clicar fora fecha
+  const tile = e.target.closest(".sh-tile[data-type]");
+  if (!tile) return;
+  const i = +tile.dataset.i;
+  const isLight = tile.dataset.type === "light";
+  const item = (isLight ? shLights : shClimate)[i];
+  item.on = !item.on;
+  tile.classList.toggle("on", item.on);
+  tile.querySelector(".st").textContent = item.on
+    ? (isLight ? "Ligada" : "Ligado")
+    : (isLight ? "Desligada" : "Desligado");
 });
 $("sh-modal").addEventListener("input", (e) => {
   if (!e.target.classList.contains("sh-slider")) return;
   const i = +e.target.dataset.i;
   shBlinds[i].value = +e.target.value;
-  $(`blind-val-${i}`).textContent = e.target.value + "%";
+  $(`blind-val-${i}`).textContent = e.target.value;
 });
