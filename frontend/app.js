@@ -312,6 +312,24 @@ refresh();
 setInterval(refresh, 5000);
 
 // --- Config do servidor (definida no Admin Panel) ---
+const GRID_GAP = 8;
+let gridRows = 12;
+
+// Linhas em PIXELS medidos (robusto no browser do tablet, onde 1fr não preenche
+// de forma estável) e recalculado sempre que a grelha muda de tamanho.
+function relayoutRows() {
+  const grid = document.querySelector(".grid");
+  if (!grid) return;
+  const h = grid.clientHeight;
+  if (!h) return;
+  const rowPx = Math.max(8, (h - (gridRows - 1) * GRID_GAP) / gridRows);
+  grid.style.gridTemplateRows = `repeat(${gridRows}, ${rowPx}px)`;
+}
+if (window.ResizeObserver) {
+  new ResizeObserver(relayoutRows).observe(document.querySelector(".grid"));
+}
+window.addEventListener("resize", relayoutRows);
+
 function applyConfig(cfg) {
   const root = document.documentElement;
   const a = cfg.appearance || {};
@@ -322,10 +340,10 @@ function applyConfig(cfg) {
   const layout = cfg.layout || {};
   const grid = document.querySelector(".grid");
   const cols = layout.cols || 12;
-  const rows = layout.rows || 12;
+  gridRows = layout.rows || 12;
   grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;  // linhas distribuídas pelo ecrã
-  grid.style.gap = "8px";  // igual à margin do editor (admin)
+  grid.style.gap = `${GRID_GAP}px`;
+  relayoutRows();  // define as linhas em px medidos
   Object.entries(layout.items || {}).forEach(([name, p]) => {
     const el = grid.querySelector(`[data-widget="${name}"]`);
     if (el) {
@@ -359,6 +377,7 @@ async function loadConfig() {
 }
 loadConfig();
 setInterval(loadConfig, 20000);  // aplica mudanças do admin em ~20s
+[400, 1200, 2500].forEach((t) => setTimeout(relayoutRows, t));  // apanha o settle do viewport no tablet
 
 // --- Smart Home (dummy — controlos fictícios por agora) ---
 const shLights = [
