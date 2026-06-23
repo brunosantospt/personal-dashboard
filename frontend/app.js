@@ -315,14 +315,23 @@ setInterval(refresh, 5000);
 const GRID_GAP = 8;
 let gridRows = 12;
 
-// Linhas em PIXELS medidos (robusto no browser do tablet, onde 1fr não preenche
-// de forma estável) e recalculado sempre que a grelha muda de tamanho.
+// Altura da grelha calculada EXPLICITAMENTE (do topo da grelha até ao fundo do
+// ecrã, menos o player) e linhas em px — não depende de flex/1fr/dvh, que
+// colapsam no browser do tablet. Recalcula sempre que algo muda de tamanho.
 function relayoutRows() {
   const grid = document.querySelector(".grid");
-  if (!grid) return;
-  const h = grid.clientHeight;
-  if (!h) return;
-  const rowPx = Math.max(8, (h - (gridRows - 1) * GRID_GAP) / gridRows);
+  const dash = document.querySelector(".dashboard");
+  const player = document.querySelector(".player");
+  if (!grid || !dash) return;
+  const cs = getComputedStyle(dash);
+  const padBottom = parseFloat(cs.paddingBottom) || 0;
+  const flexGap = parseFloat(cs.rowGap) || 0;
+  const dashBottom = dash.getBoundingClientRect().bottom;
+  const gridTop = grid.getBoundingClientRect().top;
+  const playerSpace = player && !player.hidden ? player.getBoundingClientRect().height + flexGap : 0;
+  const avail = Math.max(40, dashBottom - padBottom - gridTop - playerSpace);
+  grid.style.height = `${avail}px`;
+  const rowPx = Math.max(8, (avail - (gridRows - 1) * GRID_GAP) / gridRows);
   grid.style.gridTemplateRows = `repeat(${gridRows}, ${rowPx}px)`;
 }
 if (window.ResizeObserver) {
@@ -378,6 +387,22 @@ async function loadConfig() {
 loadConfig();
 setInterval(loadConfig, 20000);  // aplica mudanças do admin em ~20s
 [400, 1200, 2500].forEach((t) => setTimeout(relayoutRows, t));  // apanha o settle do viewport no tablet
+
+// modo debug: abrir o dashboard com ?debug mostra os números reais do ecrã
+if (location.search.includes("debug")) {
+  const dbg = $("dbg");
+  dbg.hidden = false;
+  setInterval(() => {
+    const g = document.querySelector(".grid");
+    const p = document.querySelector(".photos-card");
+    const r = (el) => el ? Math.round(el.getBoundingClientRect().height) : "?";
+    dbg.textContent =
+      `vp ${innerWidth}x${innerHeight}\n` +
+      `grid h=${r(g)} top=${Math.round(g.getBoundingClientRect().top)}\n` +
+      `photos h=${r(p)} bottom=${Math.round(p.getBoundingClientRect().bottom)}\n` +
+      `rows ${gridRows}`;
+  }, 500);
+}
 
 // --- Smart Home (dummy — controlos fictícios por agora) ---
 const shLights = [
