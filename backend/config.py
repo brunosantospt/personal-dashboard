@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./backend/dashboard.db"
     secret_key: str = "dev-insecure-change-me"  # chave Fernet (encripta tokens OAuth) + assina JWT
     admin_password_hash: str = ""               # hash bcrypt da password do admin
+    admin_password: str = ""                    # alternativa em texto simples (evita $ no hash em alguns hosts)
     admin_session_hours: int = 24               # validade do JWT de sessão do admin
 
     # Localização default para a meteorologia (Porto)

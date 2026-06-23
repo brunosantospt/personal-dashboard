@@ -1,3 +1,4 @@
+import secrets
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -18,9 +19,16 @@ WINDOW_SECONDS = 60
 
 
 def verify_password(password: str) -> bool:
+    # Opção 1: password em texto simples (ADMIN_PASSWORD) — evita problemas de $ no hash.
+    if settings.admin_password:
+        return secrets.compare_digest(password, settings.admin_password)
+    # Opção 2: hash bcrypt (ADMIN_PASSWORD_HASH). Hash inválido -> False (não rebenta).
     if not settings.admin_password_hash:
         return False
-    return bcrypt.checkpw(password.encode(), settings.admin_password_hash.encode())
+    try:
+        return bcrypt.checkpw(password.encode(), settings.admin_password_hash.encode())
+    except (ValueError, TypeError):
+        return False
 
 
 def create_token() -> str:
