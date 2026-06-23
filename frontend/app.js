@@ -254,6 +254,12 @@ let photos = [];
 let photoIdx = 0;
 let activeLayer = "a";
 
+function setSlide(layer, url) {
+  const slide = $(`slide-${layer}`);
+  slide.querySelector(".slide-bg").style.backgroundImage = `url("${url}")`;
+  slide.querySelector(".slide-fg").src = url;
+}
+
 async function loadPhotoList() {
   try {
     photos = (await (await fetch("/api/photos")).json()).photos || [];
@@ -264,21 +270,19 @@ async function loadPhotoList() {
     card.hidden = false;
     photoIdx = 0;
     activeLayer = "a";
-    const a = $("carousel-a");
-    a.src = photos[0];
-    a.classList.add("active");
+    setSlide("a", photos[0]);
+    $("slide-a").classList.add("active");
   }
 }
 
 function nextPhoto() {
   if (photos.length < 2) return;
   photoIdx = (photoIdx + 1) % photos.length;
-  const cur = $(`carousel-${activeLayer}`);
-  const nxt = $(`carousel-${activeLayer === "a" ? "b" : "a"}`);
-  nxt.src = photos[photoIdx];
-  nxt.classList.add("active");
-  cur.classList.remove("active");
-  activeLayer = activeLayer === "a" ? "b" : "a";
+  const next = activeLayer === "a" ? "b" : "a";
+  setSlide(next, photos[photoIdx]);
+  $(`slide-${next}`).classList.add("active");
+  $(`slide-${activeLayer}`).classList.remove("active");
+  activeLayer = next;
 }
 
 let photoTimer = null;
@@ -357,3 +361,54 @@ async function loadConfig() {
 }
 loadConfig();
 setInterval(loadConfig, 20000);  // aplica mudanças do admin em ~20s
+
+// --- Smart Home (dummy — controlos fictícios por agora) ---
+const shLights = [
+  { name: "Sala", on: true },
+  { name: "Cozinha", on: false },
+  { name: "Quarto", on: false },
+  { name: "Escritório", on: true },
+];
+const shBlinds = [
+  { name: "Sala", value: 80 },
+  { name: "Quarto", value: 30 },
+];
+const shClimate = [{ name: "Ar condicionado", on: false }];
+
+function renderSmartHome() {
+  $("sh-lights").innerHTML = shLights.map((l, i) => `
+    <div class="sh-row"><span class="name">${l.name}</span>
+      <button class="sh-toggle ${l.on ? "on" : ""}" data-type="light" data-i="${i}"></button>
+    </div>`).join("");
+  $("sh-blinds").innerHTML = shBlinds.map((b, i) => `
+    <div class="sh-row"><span class="name">${b.name}</span>
+      <input class="sh-slider" type="range" min="0" max="100" value="${b.value}" data-i="${i}">
+      <span class="sh-val" id="blind-val-${i}">${b.value}%</span>
+    </div>`).join("");
+  $("sh-climate").innerHTML = shClimate.map((c, i) => `
+    <div class="sh-row"><span class="name">${c.name}</span>
+      <button class="sh-toggle ${c.on ? "on" : ""}" data-type="climate" data-i="${i}"></button>
+    </div>`).join("");
+}
+
+$("smarthome-card").addEventListener("click", () => {
+  renderSmartHome();
+  $("sh-modal").hidden = false;
+});
+$("sh-close").addEventListener("click", () => { $("sh-modal").hidden = true; });
+$("sh-modal").addEventListener("click", (e) => {
+  if (e.target.id === "sh-modal") $("sh-modal").hidden = true;  // clicar fora fecha
+  const btn = e.target.closest(".sh-toggle");
+  if (btn) {
+    const i = +btn.dataset.i;
+    if (btn.dataset.type === "light") shLights[i].on = !shLights[i].on;
+    else if (btn.dataset.type === "climate") shClimate[i].on = !shClimate[i].on;
+    btn.classList.toggle("on");
+  }
+});
+$("sh-modal").addEventListener("input", (e) => {
+  if (!e.target.classList.contains("sh-slider")) return;
+  const i = +e.target.dataset.i;
+  shBlinds[i].value = +e.target.value;
+  $(`blind-val-${i}`).textContent = e.target.value + "%";
+});

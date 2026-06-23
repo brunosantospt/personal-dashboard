@@ -145,13 +145,66 @@ body {
 .flip-btn:hover { background: rgba(255, 255, 255, 0.12); color: var(--text); }
 .flip-btn:active { transform: scale(0.9); }
 
-/* carousel de fotos */
-.photos-card { position: relative; overflow: hidden; padding: 0; min-height: 240px; }
-.carousel-img {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; opacity: 0; transition: opacity 1.2s ease;
+/* carousel de fotos — foto inteira (contain) sobre cópia desfocada que preenche */
+.photos-card { position: relative; overflow: hidden; padding: 0; }
+.carousel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
+.carousel-slide.active { opacity: 1; }
+.slide-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  filter: blur(24px) brightness(0.5); transform: scale(1.2);
 }
-.carousel-img.active { opacity: 1; }
+.slide-fg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+
+/* bloco smart home */
+.smarthome-card {
+  align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: background 0.15s;
+}
+.smarthome-card:hover { background: rgba(255, 255, 255, 0.07); }
+.sh-icon { font-size: clamp(2rem, 6vw, 4rem); line-height: 1; }
+.sh-label {
+  font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+}
+
+/* modal smart home */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 4vh;
+}
+.modal {
+  width: min(560px, 92vw); max-height: 88vh; overflow-y: auto;
+  background: #11161d; border: 1px solid var(--border); border-radius: 20px;
+  padding: 28px;
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-head h2 { font-size: 1.4rem; }
+.modal-close {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06); color: var(--text); font-size: 1.1rem; cursor: pointer;
+}
+.sh-section { margin-bottom: 22px; }
+.sh-section h3 {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--muted); margin-bottom: 12px;
+}
+.sh-controls { display: flex; flex-direction: column; gap: 12px; }
+.sh-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.sh-row .name { font-size: 1.05rem; }
+.sh-toggle {
+  width: 52px; height: 28px; border-radius: 99px; border: none; cursor: pointer;
+  background: var(--border); position: relative; transition: background 0.2s; flex: none;
+}
+.sh-toggle.on { background: var(--accent); }
+.sh-toggle::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+  border-radius: 50%; background: #fff; transition: left 0.2s;
+}
+.sh-toggle.on::after { left: 27px; }
+.sh-slider { width: 55%; accent-color: var(--accent); }
+.sh-val { color: var(--muted); font-size: 0.9rem; min-width: 42px; text-align: right; }
 
 /* spotify player */
 .player {

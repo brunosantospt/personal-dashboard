@@ -45,8 +45,13 @@
       </section>
 
       <section class="card photos-card" id="photos-card" data-widget="photos" hidden>
-        <img class="carousel-img" id="carousel-a" alt="">
-        <img class="carousel-img" id="carousel-b" alt="">
+        <div class="carousel-slide" id="slide-a"><div class="slide-bg"></div><img class="slide-fg" alt=""></div>
+        <div class="carousel-slide" id="slide-b"><div class="slide-bg"></div><img class="slide-fg" alt=""></div>
+      </section>
+
+      <section class="card smarthome-card" id="smarthome-card" data-widget="smarthome">
+        <div class="sh-icon">🏠</div>
+        <div class="sh-label">Casa</div>
       </section>
     </div>
 
@@ -64,6 +69,32 @@
       </div>
     </footer>
   </main>
+
+  <!-- Modal Smart Home (dummy por agora) -->
+  <div class="modal-overlay" id="sh-modal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2>🏠 Casa</h2>
+        <button class="modal-close" id="sh-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="sh-section">
+        <h3>Luzes</h3>
+        <div class="sh-controls" id="sh-lights"></div>
+      </div>
+
+      <div class="sh-section">
+        <h3>Estores</h3>
+        <div class="sh-controls" id="sh-blinds"></div>
+      </div>
+
+      <div class="sh-section">
+        <h3>Clima</h3>
+        <div class="sh-controls" id="sh-climate"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

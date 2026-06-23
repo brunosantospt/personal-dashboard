@@ -20,8 +20,9 @@ def _defaults() -> dict:
             "rows": 12,
             # posição/tamanho de cada widget na grelha (drag/resize no admin)
             "items": {
-                "weather": {"x": 0, "y": 0, "w": 4, "h": 4},
-                "photos": {"x": 0, "y": 4, "w": 4, "h": 8},
+                "weather": {"x": 0, "y": 0, "w": 4, "h": 3},
+                "smarthome": {"x": 0, "y": 3, "w": 4, "h": 3},
+                "photos": {"x": 0, "y": 6, "w": 4, "h": 6},
                 "calendar": {"x": 4, "y": 0, "w": 4, "h": 12},
                 "tasks": {"x": 8, "y": 0, "w": 4, "h": 12},
             },
@@ -34,6 +35,7 @@ def _defaults() -> dict:
                 "hide": list(settings.calendar_hide),
             },
             "tasks": {"enabled": True, "done_window_hours": 2},
+            "smarthome": {"enabled": True},
             "photos": {
                 "enabled": True,
                 "interval_seconds": 8,

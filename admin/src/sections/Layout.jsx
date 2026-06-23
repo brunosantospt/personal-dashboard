@@ -10,6 +10,7 @@ const META = {
   calendar: { label: "Eventos", color: "#f0883e" },
   tasks: { label: "Tarefas", color: "#a78bfa" },
   photos: { label: "Fotos", color: "#f87171" },
+  smarthome: { label: "Casa", color: "#60a5fa" },
 };
 
 const ASPECT = 1280 / 800; // ecrã do tablet (Lenovo M10 HD) — canvas WYSIWYG

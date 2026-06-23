@@ -8,6 +8,7 @@ const META = {
   tasks: "Tarefas",
   photos: "Fotos",
   spotify: "Spotify",
+  smarthome: "Casa",
 };
 
 export default function Widgets() {
